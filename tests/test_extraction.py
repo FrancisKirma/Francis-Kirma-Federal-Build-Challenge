@@ -21,8 +21,11 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
-from comparison import compare_record
-from extraction import (
+from constants import STATUTORY_WARNING, WARNING_VARIANTS
+from models import FIELD_ORDER, ExtractedFields
+from repositories.applications import label_path, pending_applications, version_dir
+from services.comparison import compare_record
+from services.extraction import (
     MAX_IMAGE_EDGE,
     PROVIDERS,
     SCHEMA,
@@ -32,9 +35,6 @@ from extraction import (
     extract,
     preprocess,
 )
-from fixtures import label_path, pending_applications, version_dir
-from models import FIELD_ORDER, ExtractedFields
-from warning_text import STATUTORY_WARNING, WARNING_VARIANTS
 
 CASSETTES = Path(__file__).parent / "cassettes"
 BUDGET_SECONDS = 5.0
@@ -190,17 +190,17 @@ def test_fixture_labels_are_not_downscaled() -> None:
 
 # --- Provider selection ----------------------------------------------------
 
-def test_unknown_provider_is_rejected() -> None:
+async def test_unknown_provider_is_rejected() -> None:
     with pytest.raises(ExtractionError, match="unknown AI_PROVIDER"):
-        extract(label_path("TTB-2024-0041").read_bytes(), provider="nope")
+        await extract(label_path("TTB-2024-0041").read_bytes(), provider="nope")
 
 
-def test_missing_key_fails_with_a_usable_message(
+async def test_missing_key_fails_with_a_usable_message(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     with pytest.raises(ExtractionError, match="OPENAI_API_KEY is not set"):
-        extract(label_path("TTB-2024-0041").read_bytes(), provider="openai")
+        await extract(label_path("TTB-2024-0041").read_bytes(), provider="openai")
 
 
 def test_both_providers_registered() -> None:

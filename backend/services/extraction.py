@@ -10,6 +10,7 @@ Requests go over httpx rather than a vendor SDK: the two adapters stay
 symmetrical, and the deployed bundle carries no provider client.
 """
 
+import asyncio
 import base64
 import json
 import os
@@ -90,7 +91,7 @@ class InvalidImageError(ValueError):
 class Provider(Protocol):
     """One vision backend. Returns the model's JSON payload as a string."""
 
-    def __call__(self, image: bytes, model: str, timeout: float) -> str:
+    async def __call__(self, image: bytes, model: str, deadline: float) -> str:
         """Send the image and return raw JSON matching SCHEMA."""
         ...
 
@@ -169,15 +170,26 @@ def _require_key(name: str) -> str:
     return key
 
 
-def _post(
+async def _post(
     url: str,
     headers: dict[str, str],
     payload: dict[str, Any],
-    timeout: float,
+    deadline: float,
 ) -> dict[str, Any]:
-    """POST JSON and return the decoded body, or raise ExtractionError."""
+    """POST JSON and return the decoded body, or raise ExtractionError.
+
+    A client per call rather than a shared one: serverless invocations do not
+    reliably share process state, so pooling across requests buys nothing.
+    """
     try:
-        response = httpx.post(url, headers=headers, json=payload, timeout=timeout)
+        async with (
+            asyncio.timeout(deadline),
+            httpx.AsyncClient(timeout=deadline) as client,
+        ):
+            response = await client.post(url, headers=headers, json=payload)
+    except TimeoutError as exc:
+        msg = "vision provider exceeded its time budget"
+        raise ExtractionError(msg) from exc
     except httpx.HTTPError as exc:
         msg = f"vision provider request failed: {type(exc).__name__}"
         raise ExtractionError(msg) from exc
@@ -188,10 +200,10 @@ def _post(
     return decoded
 
 
-def _openai(image: bytes, model: str, timeout: float) -> str:
+async def _openai(image: bytes, model: str, deadline: float) -> str:
     """Call the OpenAI Responses API with a strict JSON schema."""
     encoded = base64.b64encode(image).decode("ascii")
-    body = _post(
+    body = await _post(
         "https://api.openai.com/v1/responses",
         {"Authorization": f"Bearer {_require_key('OPENAI_API_KEY')}"},
         {
@@ -220,7 +232,7 @@ def _openai(image: bytes, model: str, timeout: float) -> str:
                 }
             },
         },
-        timeout,
+        deadline,
     )
     if body.get("status") == "incomplete":
         msg = "vision provider returned an incomplete response"
@@ -238,10 +250,10 @@ def _openai(image: bytes, model: str, timeout: float) -> str:
     return "".join(chunks)
 
 
-def _anthropic(image: bytes, model: str, timeout: float) -> str:
+async def _anthropic(image: bytes, model: str, deadline: float) -> str:
     """Call the Anthropic Messages API, using a tool call to force the schema."""
     encoded = base64.b64encode(image).decode("ascii")
-    body = _post(
+    body = await _post(
         "https://api.anthropic.com/v1/messages",
         {
             "x-api-key": _require_key("ANTHROPIC_API_KEY"),
@@ -276,7 +288,7 @@ def _anthropic(image: bytes, model: str, timeout: float) -> str:
                 }
             ],
         },
-        timeout,
+        deadline,
     )
     for block in body.get("content", []):
         if block.get("type") == "tool_use":
@@ -293,7 +305,7 @@ DEFAULT_MODELS: Final[dict[str, str]] = {
 }
 
 
-def extract(
+async def extract(
     image: bytes,
     *,
     provider: str | None = None,
@@ -318,7 +330,7 @@ def extract(
         raise ExtractionError(msg)
 
     chosen = model or os.environ.get("AI_MODEL") or DEFAULT_MODELS[name]
-    raw = call(prepared, chosen.strip(), remaining)
+    raw = await call(prepared, chosen.strip(), remaining)
 
     try:
         return ExtractedFields.model_validate_json(raw)

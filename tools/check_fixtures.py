@@ -12,12 +12,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
-from comparison import normalize, parse_measure
-from warning_text import STATUTORY_WARNING, WARNING_VARIANTS
-
-from fixtures import version_dir
+from constants import STATUTORY_WARNING, WARNING_VARIANTS
+from repositories.applications import version_dir
+from services.comparison import normalize, parse_measure
 
 FIXTURES = version_dir() / "applications.json"
 NORMALIZED_FIELDS = ("brand_name", "class_type")

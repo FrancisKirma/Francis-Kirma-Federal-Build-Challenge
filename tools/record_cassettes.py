@@ -9,6 +9,7 @@ Cassettes are a regression baseline, not proof the live model still behaves --
 re-record when the model or the prompt changes.
 """
 
+import asyncio
 import json
 import os
 import pathlib
@@ -18,9 +19,9 @@ from typing import Any
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "backend"))
 
-from extraction import DEFAULT_MODELS, ExtractionError, extract
-from fixtures import label_path, pending_applications
-from warning_text import STATUTORY_WARNING, WARNING_VARIANTS
+from constants import STATUTORY_WARNING, WARNING_VARIANTS
+from repositories.applications import label_path, pending_applications
+from services.extraction import DEFAULT_MODELS, ExtractionError, extract
 
 CASSETTES = pathlib.Path(__file__).resolve().parents[1] / "tests" / "cassettes"
 
@@ -52,7 +53,7 @@ def _warning_verdict(printed: str, extracted: str | None) -> str:
     return "ALTERED"
 
 
-def main() -> int:
+async def _record() -> int:
     """Record one cassette per fixture and report latency and fidelity."""
     _load_dotenv()
     provider = os.environ.get("AI_PROVIDER", "openai")
@@ -76,7 +77,7 @@ def main() -> int:
 
         started = time.perf_counter()
         try:
-            fields = extract(image)
+            fields = await extract(image)
         except ExtractionError as exc:
             elapsed = time.perf_counter() - started
             failures.append(app_id)
@@ -116,6 +117,11 @@ def main() -> int:
         print(f"FAILED to record: {', '.join(failures)}")
         return 1
     return 0
+
+
+def main() -> int:
+    """Entry point; the recorder drives the async extraction path."""
+    return asyncio.run(_record())
 
 
 if __name__ == "__main__":

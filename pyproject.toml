@@ -8,6 +8,7 @@ dependencies = [
     "httpx>=0.28.1",
     "pillow>=12.3.0",
     "pydantic>=2.9",
+    "python-multipart>=0.0.32",
 ]
 
 [dependency-groups]
@@ -15,11 +16,13 @@ dev = [
     "pytest>=8.3",
     "mypy>=1.13",
     "ruff>=0.8",
+    "pytest-asyncio>=1.4.0",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["backend"]
 testpaths = ["tests"]
+asyncio_mode = "auto"
 
 [tool.mypy]
 strict = true
@@ -42,13 +45,19 @@ ignore = ["D203", "D213", "CPY001", "COM812", "ISC001"]
 # Tests assert, name things descriptively, and hold no docstrings per function.
 # FBT003: the warning attestation genuinely is a positional bool.
 # RUF001: curly quotes are the input under test, not a typo.
-"tests/**" = ["S101", "D103", "PLR2004", "INP001", "FBT003", "RUF001", "ANN202"]
+# ARG001/ARG002: test doubles must match a signature they do not fully use.
+# D102/D107: fake classes are self-evident; the module docstring covers them.
+"tests/**" = [
+    "S101", "D103", "PLR2004", "INP001", "FBT003", "RUF001", "ANN202",
+    "ARG001", "ARG002", "D102", "D107",
+]
 # Dev script: prints to the terminal by design, not a library.
 "tools/**" = ["T201", "INP001"]
 # Module self-checks assert deliberately; they are the runnable check for logic
 # that has no separate test module.
-"backend/fixtures/**" = ["S101", "T201", "INP001"]
-# backend/ is a sys.path root, not a package -- an __init__.py there collides
-# with mypy_path. INP001 does not apply.
-"backend/*.py" = ["INP001"]
-"backend/warning_text.py" = ["S101", "T201", "INP001"]
+# backend/ is a sys.path root, not a package: an __init__.py there collides with
+# mypy_path, so INP001 does not apply to modules sitting directly in it.
+"backend/main.py" = ["INP001"]
+"backend/constants.py" = ["INP001", "S101", "T201"]
+# Repository self-check asserts deliberately and prints its result.
+"backend/repositories/**" = ["S101", "T201"]

@@ -10,7 +10,9 @@ import json
 from pathlib import Path
 from typing import Any, Final
 
-_ROOT: Final = Path(__file__).parent
+# The fixture data lives beside the backend package, not beside this module: it is
+# seeded data standing in for a COLA fetch, not source.
+_ROOT: Final = Path(__file__).resolve().parents[1] / "fixtures"
 
 TRUTH_KEY: Final = "_label_truth"
 

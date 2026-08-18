@@ -23,8 +23,8 @@ from typing import Any, Final
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
-from fixtures import current_version, version_dir
-from warning_text import WARNING_VARIANTS
+from constants import WARNING_VARIANTS
+from repositories.applications import current_version, version_dir
 
 TEMPLATE: Final = Path(__file__).with_name("label_template.html")
 PANEL: Final = (600, 800)

@@ -16,6 +16,7 @@ import re
 import unicodedata
 from typing import Final
 
+from constants import STATUTORY_WARNING
 from models import (
     FIELD_ORDER,
     ClaimedFields,
@@ -24,7 +25,6 @@ from models import (
     Status,
     VerificationResult,
 )
-from warning_text import STATUTORY_WARNING
 
 # Volumes are compared in millilitres so 0.75 L and 750 mL agree.
 #

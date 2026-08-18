@@ -18,10 +18,10 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
-from comparison import compare_field, compare_record, normalize, parse_measure
-from fixtures import pending_applications, version_dir
+from constants import STATUTORY_WARNING, WARNING_VARIANTS
 from models import Status, VerificationResult
-from warning_text import STATUTORY_WARNING, WARNING_VARIANTS
+from repositories.applications import pending_applications, version_dir
+from services.comparison import compare_field, compare_record, normalize, parse_measure
 
 
 def _records() -> list[dict[str, Any]]:
