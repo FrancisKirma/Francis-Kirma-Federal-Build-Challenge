@@ -1,0 +1,92 @@
+<!doctype html>
+<meta charset="utf-8">
+<!--
+  Single front panel for a 750ml bottle label. One template for every fixture;
+  the visual identity comes from the CSS custom properties in {{STYLE_VARS}} so
+  extraction is never exercised against one memorizable design.
+
+  Placeholders are substituted by tools/generate_labels.py. {{WARNING_BLOCK}} is
+  the whole element, not just its text, so TTB-2024-0048 composes without it
+  rather than leaving a gap where a warning should be.
+-->
+<style>
+  :root {
+    {{STYLE_VARS}}
+  }
+
+  html, body { margin: 0; padding: 0; }
+
+  .label {
+    width: 600px;
+    height: 800px;
+    box-sizing: border-box;
+    padding: 44px 40px 34px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body-font);
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .rule {
+    border-top: 1px solid var(--accent);
+    margin: 0 auto;
+    width: var(--rule-width, 55%);
+  }
+
+  .brand {
+    font-family: var(--display-font);
+    font-size: var(--brand-size);
+    line-height: 1.04;
+    letter-spacing: var(--brand-tracking);
+    text-transform: var(--brand-transform, none);
+    margin-top: var(--brand-top, 54px);
+    color: var(--brand-ink, var(--ink));
+  }
+
+  .class-type {
+    font-size: var(--class-size, 21px);
+    font-style: var(--class-style, italic);
+    letter-spacing: var(--class-tracking, .02em);
+    margin: 20px auto 0;
+    max-width: 78%;
+  }
+
+  /* Pushes the statutory block to the foot of the panel regardless of brand length. */
+  .spacer { flex: 1 1 auto; }
+
+  .measures {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--measure-size, 15px);
+    letter-spacing: .06em;
+    margin-bottom: 16px;
+  }
+
+  .warning {
+    font-family: var(--warning-font, "Helvetica Neue", Helvetica, sans-serif);
+    /* 11px is legible to the vision model at 600px wide -- verified before use.
+       Smaller is more realistic and less readable; this is the tested floor. */
+    font-size: 11px;
+    line-height: 1.36;
+    text-align: left;
+    padding-top: 9px;
+    border-top: 1px solid var(--accent);
+    color: var(--warning-ink, var(--ink));
+  }
+</style>
+
+<div class="label">
+  <div class="brand">{{BRAND_NAME}}</div>
+  <div class="rule" style="margin-top: 22px"></div>
+  <div class="class-type">{{CLASS_TYPE}}</div>
+
+  <div class="spacer"></div>
+
+  <div class="measures">
+    <span>{{ALCOHOL_CONTENT}}</span>
+    <span>{{NET_CONTENTS}}</span>
+  </div>
+  {{WARNING_BLOCK}}
+</div>

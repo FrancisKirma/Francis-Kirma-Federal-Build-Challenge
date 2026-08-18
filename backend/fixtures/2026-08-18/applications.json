@@ -1,0 +1,267 @@
+[
+  {
+    "application_id": "TTB-2024-0041",
+    "applicant": "Old Tom Distillery LLC",
+    "submitted_date": "2024-03-11",
+    "beverage_type": "distilled_spirits",
+    "artwork": "labels/ttb-2024-0041.png",
+    "submitted": {
+      "brand_name": "OLD TOM DISTILLERY",
+      "class_type": "Kentucky Straight Bourbon Whiskey",
+      "alcohol_content": "45% Alc./Vol. (90 Proof)",
+      "net_contents": "750 mL",
+      "government_warning": true
+    },
+    "_label_truth": {
+      "note": "What gets printed on the artwork. Never served to the client; the service must read this off the image, not be told it.",
+      "condition": "Clean baseline.",
+      "style": "serif-cream",
+      "printed": {
+        "brand_name": "OLD TOM DISTILLERY",
+        "class_type": "Kentucky Straight Bourbon Whiskey",
+        "alcohol_content": "45% Alc./Vol. (90 Proof)",
+        "net_contents": "750 mL",
+        "government_warning": "STATUTORY"
+      },
+      "expected_status": {
+        "brand_name": "match",
+        "class_type": "match",
+        "alcohol_content": "match",
+        "net_contents": "match",
+        "government_warning": "match"
+      }
+    }
+  },
+  {
+    "application_id": "TTB-2024-0042",
+    "applicant": "Stone's Throw Spirits Co.",
+    "submitted_date": "2024-03-11",
+    "beverage_type": "distilled_spirits",
+    "artwork": "labels/ttb-2024-0042.png",
+    "submitted": {
+      "brand_name": "Stone's Throw",
+      "class_type": "Straight Rye Whiskey",
+      "alcohol_content": "43% Alc./Vol. (86 Proof)",
+      "net_contents": "750 mL",
+      "government_warning": true
+    },
+    "_label_truth": {
+      "note": "What gets printed on the artwork. Never served to the client; the service must read this off the image, not be told it.",
+      "condition": "Label sets brand and class in all caps; application uses title case. Dave's STONE'S THROW case.",
+      "style": "sans-slate",
+      "printed": {
+        "brand_name": "STONE'S THROW",
+        "class_type": "STRAIGHT RYE WHISKEY",
+        "alcohol_content": "43% Alc./Vol. (86 Proof)",
+        "net_contents": "750 mL",
+        "government_warning": "STATUTORY"
+      },
+      "expected_status": {
+        "brand_name": "match",
+        "class_type": "match",
+        "alcohol_content": "match",
+        "net_contents": "match",
+        "government_warning": "match"
+      }
+    }
+  },
+  {
+    "application_id": "TTB-2024-0043",
+    "applicant": "Cedar Hollow Distilling",
+    "submitted_date": "2024-03-12",
+    "beverage_type": "distilled_spirits",
+    "artwork": "labels/ttb-2024-0043.png",
+    "submitted": {
+      "brand_name": "CEDAR HOLLOW",
+      "class_type": "Tennessee Whiskey",
+      "alcohol_content": "45% Alc./Vol. (90 Proof)",
+      "net_contents": "750 mL",
+      "government_warning": true
+    },
+    "_label_truth": {
+      "note": "What gets printed on the artwork. Never served to the client; the service must read this off the image, not be told it.",
+      "condition": "Application says 45%, label printed 43% after an uncommunicated batch change.",
+      "style": "serif-black",
+      "printed": {
+        "brand_name": "CEDAR HOLLOW",
+        "class_type": "Tennessee Whiskey",
+        "alcohol_content": "43% Alc./Vol. (86 Proof)",
+        "net_contents": "750 mL",
+        "government_warning": "STATUTORY"
+      },
+      "expected_status": {
+        "brand_name": "match",
+        "class_type": "match",
+        "alcohol_content": "mismatch",
+        "net_contents": "match",
+        "government_warning": "match"
+      }
+    }
+  },
+  {
+    "application_id": "TTB-2024-0044",
+    "applicant": "Harbor Light Spirits Inc.",
+    "submitted_date": "2024-03-12",
+    "beverage_type": "distilled_spirits",
+    "artwork": "labels/ttb-2024-0044.png",
+    "submitted": {
+      "brand_name": "HARBOR LIGHT",
+      "class_type": "Blended Whiskey",
+      "alcohol_content": "40% Alc./Vol. (80 Proof)",
+      "net_contents": "750 mL",
+      "government_warning": true
+    },
+    "_label_truth": {
+      "note": "What gets printed on the artwork. Never served to the client; the service must read this off the image, not be told it.",
+      "condition": "Warning present and correctly worded, but set in title case. Jenny's rejection case.",
+      "style": "sans-navy",
+      "printed": {
+        "brand_name": "HARBOR LIGHT",
+        "class_type": "Blended Whiskey",
+        "alcohol_content": "40% Alc./Vol. (80 Proof)",
+        "net_contents": "750 mL",
+        "government_warning": "TITLE_CASE"
+      },
+      "expected_status": {
+        "brand_name": "match",
+        "class_type": "match",
+        "alcohol_content": "match",
+        "net_contents": "match",
+        "government_warning": "mismatch"
+      }
+    }
+  },
+  {
+    "application_id": "TTB-2024-0045",
+    "applicant": "Maison Duval Imports",
+    "submitted_date": "2024-03-13",
+    "beverage_type": "distilled_spirits",
+    "artwork": "labels/ttb-2024-0045.png",
+    "submitted": {
+      "brand_name": "MAISON DUVAL",
+      "class_type": "Cognac",
+      "alcohol_content": "40% Alc./Vol. (80 Proof)",
+      "net_contents": "750 mL",
+      "government_warning": true
+    },
+    "_label_truth": {
+      "note": "What gets printed on the artwork. Never served to the client; the service must read this off the image, not be told it.",
+      "condition": "European fill size. Application says 750 mL, label carries the EU-standard 700 mL.",
+      "style": "serif-gold",
+      "printed": {
+        "brand_name": "MAISON DUVAL",
+        "class_type": "Cognac",
+        "alcohol_content": "40% Alc./Vol. (80 Proof)",
+        "net_contents": "700 mL",
+        "government_warning": "STATUTORY"
+      },
+      "expected_status": {
+        "brand_name": "match",
+        "class_type": "match",
+        "alcohol_content": "match",
+        "net_contents": "mismatch",
+        "government_warning": "match"
+      }
+    }
+  },
+  {
+    "application_id": "TTB-2024-0046",
+    "applicant": "Ridgeway Brothers Distillery",
+    "submitted_date": "2024-03-13",
+    "beverage_type": "distilled_spirits",
+    "artwork": "labels/ttb-2024-0046.png",
+    "submitted": {
+      "brand_name": "RIDGEWAY BROTHERS",
+      "class_type": "Kentucky Straight Bourbon Whiskey",
+      "alcohol_content": "47% Alc./Vol. (94 Proof)",
+      "net_contents": "750 mL",
+      "government_warning": true
+    },
+    "_label_truth": {
+      "note": "What gets printed on the artwork. Never served to the client; the service must read this off the image, not be told it.",
+      "condition": "Class/type shortened on the label, dropping the 'Straight ... Whiskey' designation. Not a normalization difference: a different claim.",
+      "style": "sans-forest",
+      "printed": {
+        "brand_name": "RIDGEWAY BROTHERS",
+        "class_type": "Kentucky Bourbon",
+        "alcohol_content": "47% Alc./Vol. (94 Proof)",
+        "net_contents": "750 mL",
+        "government_warning": "STATUTORY"
+      },
+      "expected_status": {
+        "brand_name": "match",
+        "class_type": "mismatch",
+        "alcohol_content": "match",
+        "net_contents": "match",
+        "government_warning": "match"
+      }
+    }
+  },
+  {
+    "application_id": "TTB-2024-0047",
+    "applicant": "Juniper Bend Distillers",
+    "submitted_date": "2024-03-14",
+    "beverage_type": "distilled_spirits",
+    "artwork": "labels/ttb-2024-0047.png",
+    "submitted": {
+      "brand_name": "JUNIPER BEND",
+      "class_type": "London Dry Gin",
+      "alcohol_content": "44% Alc./Vol. (88 Proof)",
+      "net_contents": "750 mL",
+      "government_warning": true
+    },
+    "_label_truth": {
+      "note": "What gets printed on the artwork. Never served to the client; the service must read this off the image, not be told it.",
+      "condition": "Values all agree. Render is perspective-warped, dimmed, and given a specular highlight to exercise the vision path on imperfect photography.",
+      "style": "serif-cream",
+      "post_process": "angled_glare",
+      "printed": {
+        "brand_name": "JUNIPER BEND",
+        "class_type": "London Dry Gin",
+        "alcohol_content": "44% Alc./Vol. (88 Proof)",
+        "net_contents": "750 mL",
+        "government_warning": "STATUTORY"
+      },
+      "expected_status": {
+        "brand_name": "match",
+        "class_type": "match",
+        "alcohol_content": "match",
+        "net_contents": "match",
+        "government_warning": "match"
+      }
+    }
+  },
+  {
+    "application_id": "TTB-2024-0048",
+    "applicant": "Salt Flat Spirits LLC",
+    "submitted_date": "2024-03-14",
+    "beverage_type": "distilled_spirits",
+    "artwork": "labels/ttb-2024-0048.png",
+    "submitted": {
+      "brand_name": "SALT FLAT",
+      "class_type": "Blanco Tequila",
+      "alcohol_content": "40% Alc./Vol. (80 Proof)",
+      "net_contents": "750 mL",
+      "government_warning": true
+    },
+    "_label_truth": {
+      "note": "What gets printed on the artwork. Never served to the client; the service must read this off the image, not be told it.",
+      "condition": "Warning statement absent from the artwork entirely. Applicant attested it was present.",
+      "style": "sans-slate",
+      "printed": {
+        "brand_name": "SALT FLAT",
+        "class_type": "Blanco Tequila",
+        "alcohol_content": "40% Alc./Vol. (80 Proof)",
+        "net_contents": "750 mL",
+        "government_warning": "ABSENT"
+      },
+      "expected_status": {
+        "brand_name": "match",
+        "class_type": "match",
+        "alcohol_content": "match",
+        "net_contents": "match",
+        "government_warning": "unreadable"
+      }
+    }
+  }
+]
