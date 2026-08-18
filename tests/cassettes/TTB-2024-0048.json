@@ -1,0 +1,13 @@
+{
+  "application_id": "TTB-2024-0048",
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "elapsed_seconds": 2.017,
+  "response": {
+    "brand_name": "SALT FLAT",
+    "class_type": "Blanco Tequila",
+    "alcohol_content": "40% Alc./Vol. (80 Proof)",
+    "net_contents": "750 mL",
+    "government_warning": null
+  }
+}

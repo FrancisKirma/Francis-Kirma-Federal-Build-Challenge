@@ -1,0 +1,13 @@
+{
+  "application_id": "TTB-2024-0043",
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "elapsed_seconds": 2.024,
+  "response": {
+    "brand_name": "CEDAR HOLLOW",
+    "class_type": "Tennessee Whiskey",
+    "alcohol_content": "43% Alc./Vol. (86 Proof)",
+    "net_contents": "750 mL",
+    "government_warning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+  }
+}

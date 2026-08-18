@@ -1,0 +1,13 @@
+{
+  "application_id": "TTB-2024-0045",
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "elapsed_seconds": 3.254,
+  "response": {
+    "brand_name": "MAISON DUVAL",
+    "class_type": "Cognac",
+    "alcohol_content": "40% Alc./Vol. (80 Proof)",
+    "net_contents": "700 mL",
+    "government_warning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+  }
+}

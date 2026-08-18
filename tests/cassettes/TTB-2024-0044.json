@@ -1,0 +1,13 @@
+{
+  "application_id": "TTB-2024-0044",
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "elapsed_seconds": 2.679,
+  "response": {
+    "brand_name": "HARBOR LIGHT",
+    "class_type": "Blended Whiskey",
+    "alcohol_content": "40% Alc./Vol. (80 Proof)",
+    "net_contents": "750 mL",
+    "government_warning": "Government Warning: (1) According To The Surgeon General, Women Should Not Drink Alcoholic Beverages During Pregnancy Because Of The Risk Of Birth Defects. (2) Consumption Of Alcoholic Beverages Impairs Your Ability To Drive A Car Or Operate Machinery, And May Cause Health Problems."
+  }
+}
