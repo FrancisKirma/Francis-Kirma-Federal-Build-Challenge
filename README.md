@@ -137,38 +137,47 @@ The pending queue stands in for a COLA fetch. Each record pairs the applicant's 
 form data with the artwork submitted alongside it.
  
 ```json
-[
-  {
-    "application_id": "TTB-2024-0041",
-    "applicant": "Old Tom Distillery LLC",
-    "submitted_date": "2024-03-11",
-    "beverage_type": "distilled_spirits",
-    "artwork": "labels/ttb-2024-0041.png",
-    "claimed": {
+{
+  "application_id": "TTB-2024-0041",
+  "applicant": "Old Tom Distillery LLC",
+  "submitted_date": "2024-03-11",
+  "beverage_type": "distilled_spirits",
+  "artwork": "labels/ttb-2024-0041.png",
+  "submitted": {
+    "brand_name": "OLD TOM DISTILLERY",
+    "class_type": "Kentucky Straight Bourbon Whiskey",
+    "alcohol_content": "45% Alc./Vol. (90 Proof)",
+    "net_contents": "750 mL",
+    "government_warning": true
+  },
+  "_label_truth": {
+    "note": "What gets printed on the artwork. Never served to the client.",
+    "condition": "Clean baseline.",
+    "style": "serif-cream",
+    "printed": {
       "brand_name": "OLD TOM DISTILLERY",
       "class_type": "Kentucky Straight Bourbon Whiskey",
       "alcohol_content": "45% Alc./Vol. (90 Proof)",
       "net_contents": "750 mL",
-      "government_warning": true
-    }
-  },
-  {
-    "application_id": "TTB-2024-0042",
-    "applicant": "Stone's Throw Spirits Co.",
-    "submitted_date": "2024-03-11",
-    "beverage_type": "distilled_spirits",
-    "artwork": "labels/ttb-2024-0042.png",
-    "claimed": {
-      "brand_name": "Stone's Throw",
-      "class_type": "Straight Rye Whiskey",
-      "alcohol_content": "43% Alc./Vol. (86 Proof)",
-      "net_contents": "750 mL",
-      "government_warning": true
+      "government_warning": "STATUTORY"
+    },
+    "expected_status": {
+      "brand_name": "match",
+      "class_type": "match",
+      "alcohol_content": "match",
+      "net_contents": "match",
+      "government_warning": "match"
     }
   }
-]
+}
 ```
- 
+
+`submitted` is the whole served record — the applicant's form data and the artwork they
+filed with it. `_label_truth` is not submitted by anyone: it is renderer input and the
+known-answer key, and `pending_applications()` strips it before serving. If the queue
+handed over what is printed on the label, the service could "pass" by echoing it back and
+the comparison engine would be untested.
+
 `government_warning` is a boolean on the application because that is how the applicant
 attests to it — the form asks whether the statement is present, and the label carries the
 text. The tool compares that attestation against the actual statutory text found on the
@@ -199,28 +208,35 @@ subtly wrong makes every failure ambiguous between "the tool works" and "the tes
 broken." Composing gives exact control over every string, which is the whole point when the
 warning is compared byte-for-byte.
  
-1. **Build one label template** as HTML/CSS sized to a 750ml front-and-back panel, with each
-   field in a slot. Render to PNG with a headless browser. (PIL works too; HTML is faster to
-   iterate on typography.)
-2. **Drive it from the fixture file.** Read `applications.json`, render one image per record,
-   write to `fixtures/labels/`. Each broken variant is then a one-line change plus a
-   re-render rather than a new asset — 0044's title-case warning is a `text-transform`
-   toggle, 0045 is `700 mL`.
-3. **Introduce the divergences deliberately** by rendering from a separate `actual` block in
-   the generator input, distinct from `claimed`. Where the two blocks agree the row is
-   clean; where they differ you have a known-answer test. This also gives you the expected
-   result table above for free, which is what makes the comparison engine testable.
-4. **Vary the visual style** across records — different fonts, colors, panel layouts — so the
-   extraction isn't being exercised against one template it could trivially memorize.
-5. **Produce 0047 by transforming a clean render**: perspective-warp, dim, and overlay a
-   specular highlight on 0041's output. Post-processing a known-good label keeps the ground
-   truth exact while still testing the vision path. Tune the distortion down until it passes
-   reliably — a fixture that fails intermittently reads as a bug during a demo, not as
-   robustness.
-6. **Optionally add one photographed real bottle** as a sanity check that the pipeline works
-   on something that didn't come out of the same generator.
-Keep the generator script in the repo. It documents the test data, makes the divergences
-auditable, and lets a reviewer regenerate or extend the fixture set.
+1. **One HTML/CSS template**, `tools/label_template.html`, sized to a single 600×800 front
+   panel with each field in a slot. Rendered to PNG by headless Chrome — already installed,
+   so no Playwright download and no new dependency for what a subprocess call does.
+2. **Driven by the fixture file.** `tools/generate_labels.py` reads the active
+   `applications.json` and renders one image per record. A broken variant is a one-line data
+   change plus a re-render, not a new asset.
+3. **Divergences come from a separate `_label_truth.printed` block**, distinct from
+   `submitted`. Where the two agree the row is clean; where they differ there is a
+   known-answer test. That block is what makes the comparison engine testable, and it is
+   never served to the client — the queue loader strips it.
+4. **Six visual styles** across the eight records — Baskerville, Futura, Didot, Optima,
+   Bodoni, Copperplate, on light and dark grounds — so extraction is not exercised against
+   one template it could memorise.
+5. **0047 is a clean render transformed**: 8° perspective rotation, dimmed, with a specular
+   highlight and directional falloff. The highlight is positioned away from the warning
+   panel and the distortion kept mild deliberately — that record expects every field to
+   match, including the byte-for-byte warning, so distortion severe enough to flake would
+   read as a tool bug rather than as robustness.
+6. **No photographed real bottle yet.** Noted in Future Work as a sanity check that the
+   pipeline is not overfit to the generator.
+
+The generator stays in the repo but is **not** a build step: it is run by hand and the PNGs
+are committed. Rendering during a build would need a browser in the deploy pipeline and
+would let a font substitution silently change what the model sees while the known-answer
+table still claimed the old result.
+
+Fixture sets are **versioned by date**. A dated folder holds its `applications.json`
+alongside the `labels/` rendered from it, so the data and the artwork stay together as a
+consistent set; the newest dated folder is the active one.
  
 ---
  
@@ -229,34 +245,33 @@ auditable, and lets a reviewer regenerate or extend the fixture set.
 ```
 .
 ├── backend/
-│   ├── main.py               # FastAPI app; serves the built frontend as static files
-│   ├── routes.py             # /api/applications, /api/verify, /api/verify/batch
-│   ├── extraction.py         # VLM call, strict-JSON prompt, Pydantic validation, one retry
 │   ├── comparison.py         # normalized / numeric / exact strategies, pure functions
-│   ├── models.py             # Application, ClaimedFields, ExtractedFields, FieldResult
-│   ├── warning_text.py       # canonical statutory warning text
+│   ├── models.py             # Pydantic v2: ClaimedFields, ExtractedFields, FieldResult
+│   ├── warning_text.py       # canonical statutory warning text, 27 CFR 16.21
 │   └── fixtures/
-│       ├── applications.json
-│       └── labels/
+│       ├── __init__.py       # queue loader; strips the answer key before serving
+│       ├── check_fixtures.py # validates each record against its own expectations
+│       └── 2026-08-18/
+│           ├── applications.json
+│           └── labels/       # eight rendered PNGs
 ├── tools/
-│   ├── generate_labels.py    # renders fixtures/labels/ from claimed + actual blocks
+│   ├── generate_labels.py    # renders labels/ from _label_truth.printed
 │   └── label_template.html
-├── frontend/
-│   └── src/
-│       ├── Queue.jsx         # pending applications, thumbnails, multi-select
-│       ├── Review.jsx        # single application, results table, full artwork
-│       ├── BatchResults.jsx  # grid, flagged rows first, rows render as they resolve
-│       └── ResultRow.jsx     # claimed | extracted | status
-└── tests/
-    └── test_comparison.py    # comparison engine against hand-written extraction JSON
+├── tests/
+│   └── test_comparison.py    # 50 tests; fixture table plus hand-written edge cases
+├── .github/workflows/ci.yml  # tsc, eslint, vitest, mypy, ruff, pytest
+├── AGENTS.md                 # standing rules for the build
+└── pyproject.toml            # deps, mypy strict, ruff ALL, pytest config
 ```
+
+Not yet built: `extraction.py` (VLM call), the FastAPI app and routes, and the React
+frontend. The order is deliberate — `comparison.py` holds no model dependency and is fully
+unit-testable against hand-written extraction dictionaries, so it is built and tested
+before the extraction layer is wired up.
  
-Single deployable unit: FastAPI serves the built React bundle, so there is one target,
-no CORS configuration, and no second service to keep running.
- 
-`comparison.py` holds no model dependency and is fully unit-testable against hand-written
-extraction dictionaries, which is why it is built and tested before the extraction layer
-is wired up.
+Deployment target is Vercel: the Python backend runs as serverless functions and the React
+bundle is served as static output, so there is one target and no second service to keep
+running.
  
 ### Endpoints
  
@@ -270,8 +285,39 @@ is wired up.
 ---
  
 ## Setup
- 
-_To be completed._
+
+Requires Python 3.13 and [uv](https://docs.astral.sh/uv/). Chrome is needed only to
+regenerate label artwork; the rendered PNGs are committed.
+
+```bash
+uv sync                                        # install dependencies
+uv run pytest -q                               # 50 tests
+uv run mypy .                                  # strict type check
+uv run ruff check .                            # lint
+```
+
+Fixture and data checks:
+
+```bash
+uv run python backend/fixtures/check_fixtures.py   # each record vs its expectations
+uv run python backend/fixtures/__init__.py         # loader, and the answer-key guard
+uv run python backend/warning_text.py              # statutory text invariants
+```
+
+Regenerating label artwork (only needed after editing `_label_truth.printed`):
+
+```bash
+uv run python tools/generate_labels.py                       # all eight
+uv run python tools/generate_labels.py --only TTB-2024-0044  # one
+CHROME=/path/to/chrome uv run python tools/generate_labels.py
+```
+
+### Quality gates
+
+`mypy --strict`, `ruff` with `select = ["ALL"]`, and pytest all run in CI and block a
+merge. The government warning's exact-match behaviour is mutation-tested: making the
+comparison case-insensitive, parsing proof instead of ABV, dropping unit conversion, or
+treating a blank reading as a mismatch each break the suite.
  
 ## Trade-offs and limitations
  
@@ -286,6 +332,21 @@ _To be completed._
   or in-boundary inference; this prototype assumes ordinary outbound access.
 - **No audit trail.** A production tool would need to record what the model extracted and
   what the agent decided, for both compliance and model-drift monitoring.
+- **Composed labels, not real artwork.** The fixtures are generated, so they are cleaner and
+  more uniform than a real COLA submission — no foil, no curved bottle wrap, no dense back
+  panel. Real artwork is the honest next test set, but it carries no known-answer key
+  without someone transcribing each label by hand.
+- **Single front panel.** Real submissions are front, back, and neck, and the warning
+  genuinely lives on the back. Composing one panel keeps every field in one image and keeps
+  the ground truth exact; multi-panel is a production concern.
+- **Fluid ounces are not converted.** Volumes normalise to millilitres, so `0.75 L` and
+  `750 mL` agree. `25.4 oz` is 751.1 mL — the same bottle at a different number — so
+  converting would turn a labelling equivalence into a numeric near-miss. Ounces compare
+  only against ounces; cross-unit matching would need a tolerance band.
+- **Fixture data and artwork can drift.** They are versioned together by date, but nothing
+  detects a `_label_truth.printed` edit made without a re-render. A hash manifest per dated
+  folder would catch it.
+
 ## Future work
  
 - **Region highlighting.** Word-level coordinates from an OCR pass, fuzzy-matched against
@@ -296,5 +357,8 @@ _To be completed._
   Those call for different agent actions.
 - **Queue prioritisation**, ordering likely-problem applications first. Not omission —
   every application is still reviewed.
+- **Real COLA artwork.** The Public COLA Registry holds approved label images back to 1999.
+  It has no bulk export — per-record lookup by TTB ID only — so a sample would be assembled
+  by hand, and each would need its fields transcribed to serve as a known-answer test.
  
 
