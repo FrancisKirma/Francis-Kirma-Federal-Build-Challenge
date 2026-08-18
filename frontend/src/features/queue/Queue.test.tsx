@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { Queue } from "./Queue";
-import type { ApplicationSummary } from "../../types";
+import type { ApplicationSummary, Decision } from "../../types";
+import type { QueueTab } from "./QueueTabs";
 
 const APPLICATIONS: ApplicationSummary[] = [
   {
@@ -36,9 +37,15 @@ const APPLICATIONS: ApplicationSummary[] = [
   },
 ];
 
-function setup(selected = new Set<string>()) {
+function setup(
+  selected = new Set<string>(),
+  tab: QueueTab = "pending",
+  decisions: ReadonlyMap<string, Decision> = new Map(),
+) {
   const props = {
     applications: APPLICATIONS,
+    decisions,
+    tab,
     selected,
     onToggle: vi.fn(),
     onToggleAll: vi.fn(),
@@ -58,7 +65,7 @@ describe("Queue", () => {
 
   it("gives every row a button rather than a bare clickable row", async () => {
     const props = setup();
-    const [first] = screen.getAllByRole("button", { name: "Check this label" });
+    const [first] = screen.getAllByRole("button", { name: "Review application" });
     if (first === undefined) throw new Error("no review buttons rendered");
     await userEvent.click(first);
     expect(props.onReview).toHaveBeenCalledWith("TTB-2024-0041");
@@ -82,6 +89,67 @@ describe("Queue", () => {
     setup();
     expect(
       screen.getByRole("checkbox", { name: "Select TTB-2024-0041" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("Queue decision states", () => {
+  const decided = new Map<string, Decision>([
+    [
+      "TTB-2024-0041",
+      { status: "approved", decidedAt: "2026-08-18T00:00:00Z", flaggedFields: [] },
+    ],
+    [
+      "TTB-2024-0042",
+      {
+        status: "approved",
+        decidedAt: "2026-08-18T00:00:00Z",
+        flaggedFields: ["government_warning"],
+      },
+    ],
+  ]);
+
+  it("sends the agent into a review rather than straight to a check", () => {
+    setup();
+    expect(
+      screen.getAllByRole("button", { name: "Review application" }),
+    ).toHaveLength(2);
+  });
+
+  it("hides selection and batch controls on decided tabs", () => {
+    setup(new Set(), "approved", decided);
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Check .* selected/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("records what disagreed at the time of an approval", () => {
+    setup(new Set(), "approved", decided);
+    expect(screen.getByText("Everything matched")).toBeInTheDocument();
+    expect(screen.getByText("1 did not match")).toBeInTheDocument();
+  });
+
+  it("lets a decided application be opened again", () => {
+    setup(new Set(), "approved", decided);
+    expect(screen.getAllByRole("button", { name: "Open again" })).toHaveLength(2);
+  });
+
+  it("says so plainly when a tab is empty", () => {
+    render(
+      <Queue
+        applications={[]}
+        decisions={new Map()}
+        tab="denied"
+        selected={new Set()}
+        onToggle={vi.fn()}
+        onToggleAll={vi.fn()}
+        onReview={vi.fn()}
+        onCheckSelected={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByText("You have not rejected any applications yet."),
     ).toBeInTheDocument();
   });
 });

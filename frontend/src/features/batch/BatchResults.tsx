@@ -1,10 +1,11 @@
 import { Button, Table, Tag } from "@trussworks/react-uswds";
 
 import { StatusAlert } from "../../components/feedback/StatusAlert";
-import type { BatchOutcome } from "../../types";
+import type { BatchOutcome, Decision } from "../../types";
 
 interface BatchResultsProps {
   outcomes: BatchOutcome[];
+  decisions: ReadonlyMap<string, Decision>;
   onOpen: (id: string) => void;
   onBack: () => void;
 }
@@ -13,14 +14,16 @@ interface BatchResultsProps {
  * Rows are ordered problems first once they settle: a clean row needs a glance,
  * a flagged or unreadable one needs a decision.
  */
-function rank(outcome: BatchOutcome): number {
-  if (outcome.pending) return 3;
+function rank(outcome: BatchOutcome, decided: boolean): number {
+  if (outcome.pending) return 4;
+  if (decided) return 3;
   if (outcome.error !== null) return 0;
   return outcome.result?.flagged === true ? 1 : 2;
 }
 
 export function BatchResults({
   outcomes,
+  decisions,
   onOpen,
   onBack,
 }: BatchResultsProps): React.ReactElement {
@@ -29,7 +32,12 @@ export function BatchResults({
     (outcome) => outcome.result?.flagged === true,
   ).length;
   const failed = outcomes.filter((outcome) => outcome.error !== null).length;
-  const ordered = [...outcomes].sort((a, b) => rank(a) - rank(b));
+  const decided = outcomes.filter((o) => decisions.has(o.application_id)).length;
+  const ordered = [...outcomes].sort(
+    (a, b) =>
+      rank(a, decisions.has(a.application_id)) -
+      rank(b, decisions.has(b.application_id)),
+  );
 
   return (
     <section>
@@ -54,9 +62,11 @@ export function BatchResults({
                 : "All labels match"
             }
           >
-            {flagged + failed > 0
-              ? "Those are listed first. Open one to see what differs."
-              : "Every label matched the form it was sent with."}
+            {decided > 0
+              ? `You have decided ${String(decided)} of ${String(outcomes.length)}. Those move to the bottom of the list.`
+              : flagged + failed > 0
+                ? "Those are listed first. Open one to see what differs."
+                : "Every label matched the form it was sent with."}
           </StatusAlert>
         )}
       </div>
@@ -67,6 +77,7 @@ export function BatchResults({
             <th scope="col">Application</th>
             <th scope="col">Company</th>
             <th scope="col">Result</th>
+            <th scope="col">Decision</th>
             <th scope="col">
               <span className="usa-sr-only">Actions</span>
             </th>
@@ -95,13 +106,31 @@ export function BatchResults({
                 )}
               </td>
               <td>
+                {decisions.get(outcome.application_id) === undefined ? (
+                  <span className="text-base">Not decided</span>
+                ) : (
+                  <Tag
+                    className={
+                      decisions.get(outcome.application_id)?.status === "approved"
+                        ? "bg-success-dark"
+                        : "bg-secondary-dark"
+                    }
+                  >
+                    {decisions.get(outcome.application_id)?.status === "approved"
+                      ? "Approved"
+                      : "Rejected"}
+                  </Tag>
+                )}
+              </td>
+              <td>
                 <Button
                   type="button"
+                  outline={decisions.has(outcome.application_id)}
                   onClick={() => {
                     onOpen(outcome.application_id);
                   }}
                 >
-                  Open
+                  {decisions.has(outcome.application_id) ? "Open again" : "Open"}
                 </Button>
               </td>
             </tr>

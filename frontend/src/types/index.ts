@@ -43,6 +43,21 @@ export interface BatchOutcome {
   pending: boolean;
 }
 
+export type DecisionStatus = "approved" | "denied";
+
+/**
+ * An agent's determination on one application.
+ *
+ * ``flaggedFields`` records what disagreed at the moment of the decision, so
+ * "approved while the warning did not match" stays distinguishable from
+ * "approved clean". That distinction is the whole value of recording anything.
+ */
+export interface Decision {
+  status: DecisionStatus;
+  decidedAt: string;
+  flaggedFields: string[];
+}
+
 /** Plain-language labels; the API's field names are not shown to the agent. */
 export const FIELD_LABELS: Record<string, string> = {
   brand_name: "Brand name",

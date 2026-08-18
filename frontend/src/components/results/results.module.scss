@@ -1,0 +1,100 @@
+/**
+ * The government warning is ~280 characters and forced a 478px table row, which
+ * pushed the decision buttons below every viewport.
+ *
+ * Long values collapse to a preview and expand on click, built on native
+ * <details>: keyboard operation, the open/closed state, and screen reader
+ * announcement come from the element rather than re-implemented ARIA. The type
+ * stays full size -- this is the field compared character by character, and
+ * small text would defeat the check it exists to support.
+ */
+.expandable {
+  summary {
+    cursor: pointer;
+    list-style: none;
+    display: block;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+    &:focus-visible {
+      outline: 0.25rem solid #2491ff;
+      outline-offset: 2px;
+    }
+  }
+
+  /* Preview and toggle read as one sentence: the link follows the truncated
+     text inline, so the affordance sits where the eye already is. */
+  .preview {
+    display: inline;
+  }
+
+  .toggle {
+    color: #005ea2;
+    text-decoration: underline;
+    white-space: nowrap;
+    margin-left: 0.25rem;
+  }
+
+  &[open] .toggle::after {
+    content: "Show less";
+  }
+  &:not([open]) .toggle::after {
+    content: "Show all";
+  }
+
+  /* Once open the full value replaces the preview in place; the toggle moves
+     below it so it does not interrupt the statement being read. */
+  &[open] .preview {
+    display: none;
+  }
+
+  &[open] summary {
+    order: 2;
+  }
+
+  &[open] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .full {
+    margin: 0 0 0.25rem;
+  }
+}
+
+/**
+ * A placeholder for a cell whose answer is still being read. It pulses rather
+ * than spinning: five spinners in one table is noise, and a calm shape in the
+ * cell says "this is where the answer goes" more clearly than a busy icon.
+ */
+.pending {
+  display: block;
+  padding: 0.25rem 0;
+}
+
+.pendingBar {
+  display: block;
+  height: 1rem;
+  border-radius: 0.125rem;
+  background: linear-gradient(90deg, #dfe1e2 25%, #f0f0f0 50%, #dfe1e2 75%);
+  background-size: 200% 100%;
+  animation: pendingShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes pendingShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Motion is decoration here; the aria-label carries the meaning. */
+@media (prefers-reduced-motion: reduce) {
+  .pendingBar {
+    animation: none;
+    background: #dfe1e2;
+  }
+}

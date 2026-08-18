@@ -2,7 +2,11 @@ import { useCallback, useState } from "react";
 
 import { verifyApplication } from "../services/api";
 import { messageFor } from "../services/errors";
-import type { ApplicationSummary, BatchOutcome } from "../types";
+import type {
+  ApplicationSummary,
+  BatchOutcome,
+  VerificationResponse,
+} from "../types";
 
 /**
  * Labels are checked a few at a time. Each is its own request so rows appear as
@@ -13,7 +17,11 @@ const CONCURRENCY = 4;
 
 interface UseBatchVerification {
   outcomes: BatchOutcome[];
-  run: (applications: ApplicationSummary[]) => Promise<void>;
+  run: (
+    applications: ApplicationSummary[],
+    /** Hands each result to the shared store so opening a row reuses it. */
+    remember: (id: string, result: VerificationResponse) => void,
+  ) => Promise<void>;
 }
 
 export function useBatchVerification(): UseBatchVerification {
@@ -30,7 +38,10 @@ export function useBatchVerification(): UseBatchVerification {
   }, []);
 
   const run = useCallback(
-    async (applications: ApplicationSummary[]) => {
+    async (
+      applications: ApplicationSummary[],
+      remember: (id: string, result: VerificationResponse) => void,
+    ) => {
       setOutcomes(
         applications.map((application) => ({
           application_id: application.application_id,
@@ -47,9 +58,9 @@ export function useBatchVerification(): UseBatchVerification {
           const next = queue.shift();
           if (next === undefined) return;
           try {
-            settle(next.application_id, {
-              result: await verifyApplication(next.application_id),
-            });
+            const verified = await verifyApplication(next.application_id);
+            remember(next.application_id, verified);
+            settle(next.application_id, { result: verified });
           } catch (cause: unknown) {
             settle(next.application_id, { error: messageFor(cause) });
           }

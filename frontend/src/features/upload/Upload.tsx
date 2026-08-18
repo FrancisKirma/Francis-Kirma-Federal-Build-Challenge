@@ -142,6 +142,13 @@ export function Upload({
           <>
             <ResultAlert result={result} />
             <ResultTable
+              claimed={{
+                brand_name: values.brand_name ?? "",
+                class_type: values.class_type ?? "",
+                alcohol_content: values.alcohol_content ?? "",
+                net_contents: values.net_contents ?? "",
+                government_warning: warningStated,
+              }}
               fields={result.fields}
               claimedHeading="What you typed"
               caption="Comparison of typed and printed values"
