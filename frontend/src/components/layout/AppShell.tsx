@@ -8,11 +8,20 @@ export function AppShell({
 }): React.ReactElement {
   return (
     <>
+      {/* Lets a keyboard or screen reader user reach the work without walking
+          the banner and header on every view. react-uswds ships no SkipNav in
+          v12, so this is USWDS's own markup. */}
+      <a className="usa-skipnav" href="#main-content">
+        Skip to the applications
+      </a>
       <GovBanner />
       <Header basic>
         <div className="usa-nav-container">
           <div className="usa-navbar">
-            <Title>TTB Label Verification</Title>
+            {/* The page's only h1: every view is a section of this one tool. */}
+            <Title>
+              <h1 className="font-heading-lg margin-0">TTB Label Verification</h1>
+            </Title>
           </div>
         </div>
       </Header>

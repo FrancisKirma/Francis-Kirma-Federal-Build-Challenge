@@ -3,7 +3,11 @@
 import type { ApplicationSummary, VerificationResponse } from "../types";
 import { ApiError, toApiError } from "./errors";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  operation: "queue" | "verify" = "verify",
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, init);
@@ -11,13 +15,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError("Could not reach the server. Check your connection.", 0);
   }
   if (!response.ok) {
-    throw await toApiError(response);
+    throw await toApiError(response, operation);
   }
   return (await response.json()) as T;
 }
 
 export function fetchApplications(): Promise<ApplicationSummary[]> {
-  return request<ApplicationSummary[]>("/api/applications");
+  return request<ApplicationSummary[]>("/api/applications", undefined, "queue");
 }
 
 export function verifyApplication(id: string): Promise<VerificationResponse> {

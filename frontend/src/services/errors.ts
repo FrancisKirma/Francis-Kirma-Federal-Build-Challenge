@@ -14,7 +14,11 @@ export class ApiError extends Error {
  * Map a failed response to wording that says what to do next. An agent who
  * cannot act on an error message is stuck, so no status codes reach the screen.
  */
-export async function toApiError(response: Response): Promise<ApiError> {
+export async function toApiError(
+  response: Response,
+  /** What was being attempted, so a 502 does not always blame label reading. */
+  operation: "queue" | "verify" = "verify",
+): Promise<ApiError> {
   let detail = "";
   try {
     const body: unknown = await response.json();
@@ -29,9 +33,13 @@ export async function toApiError(response: Response): Promise<ApiError> {
     case 404:
       return new ApiError("That application could not be found.", 404);
     case 502:
+    case 503:
+    case 504:
       return new ApiError(
-        "The label could not be read this time. Try checking it again.",
-        502,
+        operation === "queue"
+          ? "The server is not responding. Refresh the page to try again."
+          : "The label could not be read this time. Try checking it again.",
+        response.status,
       );
     case 413:
       return new ApiError("That image is too large. The limit is 20 MB.", 413);
