@@ -17,6 +17,8 @@ venv/
 node_modules/
 dist/
 .vite/
+# Generated from @uswds/uswds by scripts/copy-uswds-assets.mjs, not source.
+frontend/public/
 
 # Vercel
 .vercel/

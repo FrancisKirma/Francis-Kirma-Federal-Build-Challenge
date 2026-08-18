@@ -17,6 +17,7 @@ dev = [
     "mypy>=1.13",
     "ruff>=0.8",
     "pytest-asyncio>=1.4.0",
+    "uvicorn[standard]>=0.52.3",
 ]
 
 [tool.pytest.ini_options]
