@@ -19,19 +19,20 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
-from fixtures import current_version, version_dir  # noqa: E402
-from warning_text import WARNING_VARIANTS  # noqa: E402
+from fixtures import current_version, version_dir
+from warning_text import WARNING_VARIANTS
 
 TEMPLATE: Final = Path(__file__).with_name("label_template.html")
 PANEL: Final = (600, 800)
 
-# ponytail: Chrome's --screenshot over Playwright -- no 130MB Chromium download and
-# no new dependency for a subprocess call. Swap to Playwright if --screenshot is
-# removed (it is soft-deprecated in favour of --headless=new).
+# Chrome's --screenshot is used over Playwright: no 130MB Chromium download and no
+# new dependency for what a subprocess call already does. The flag is soft-
+# deprecated in favour of --headless=new, so Playwright is the fallback if it is
+# ever removed.
 CHROME_CANDIDATES: Final = (
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
@@ -136,7 +137,11 @@ def verify_fonts() -> list[str]:
     A silent substitution changes what the model reads while the JSON still claims
     the old answer, so this is worth knowing before rendering, not after.
     """
-    roots = (Path("/System/Library/Fonts"), Path("/Library/Fonts"), Path.home() / "Library/Fonts")
+    roots = (
+        Path("/System/Library/Fonts"),
+        Path("/Library/Fonts"),
+        Path.home() / "Library/Fonts",
+    )
     available = {
         f.stem.split()[0].lower()
         for root in roots
@@ -149,7 +154,7 @@ def verify_fonts() -> list[str]:
 
 
 def warning_block(variant: str) -> str:
-    """The warning element, or nothing at all when the label carries no warning."""
+    """Return the warning element, or nothing when the label carries no warning."""
     text = WARNING_VARIANTS[variant]
     if text is None:
         # 0048: composed without the element, so the panel reads as a label designed
@@ -158,14 +163,15 @@ def warning_block(variant: str) -> str:
     return f'<div class="warning">{html.escape(text)}</div>'
 
 
-def render_html(record: dict) -> str:
+def render_html(record: dict[str, Any]) -> str:
     """Fill the template from one record's printed (not submitted) values."""
     truth = record["_label_truth"]
     printed = truth["printed"]
     style = STYLES[truth["style"]]
 
     page = TEMPLATE.read_text()
-    page = page.replace("{{STYLE_VARS}}", "\n    ".join(f"{k}: {v};" for k, v in style.items()))
+    variables = "\n    ".join(f"{k}: {v};" for k, v in style.items())
+    page = page.replace("{{STYLE_VARS}}", variables)
     for key, placeholder in (
         ("brand_name", "{{BRAND_NAME}}"),
         ("class_type", "{{CLASS_TYPE}}"),
@@ -173,7 +179,8 @@ def render_html(record: dict) -> str:
         ("net_contents", "{{NET_CONTENTS}}"),
     ):
         page = page.replace(placeholder, html.escape(str(printed[key])))
-    page = page.replace("{{WARNING_BLOCK}}", warning_block(printed["government_warning"]))
+    warning = warning_block(printed["government_warning"])
+    page = page.replace("{{WARNING_BLOCK}}", warning)
 
     if truth.get("post_process") == "angled_glare":
         page = page.replace("</style>", DISTORTION + "</style>")
@@ -205,6 +212,7 @@ def shoot(chrome: str, page: str, out: Path) -> None:
 
 
 def main() -> int:
+    """Render every fixture label, or just the one named by --only."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--only", help="render a single application_id")
     args = parser.parse_args()
@@ -229,7 +237,8 @@ def main() -> int:
         out = directory / record["artwork"]
         shoot(chrome, render_html(record), out)
         note = record["_label_truth"]["condition"].split(".")[0]
-        print(f"  {out.name}  {out.stat().st_size // 1024:>4} KB   {note}")
+        size_kb = out.stat().st_size // 1024
+        print(f"  {out.name}  {size_kb:>4} KB   {note}")
 
     print(f"rendered {len(records)} label(s) into {current_version()}/labels/")
     return 0

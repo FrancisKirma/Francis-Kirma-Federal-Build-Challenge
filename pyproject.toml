@@ -1,0 +1,52 @@
+[project]
+name = "ttb-label-verification"
+version = "0.1.0"
+description = "TTB label verification proof-of-concept"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.117.1",
+    "pydantic>=2.9",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "mypy>=1.13",
+    "ruff>=0.8",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["backend"]
+testpaths = ["tests"]
+
+[tool.mypy]
+strict = true
+files = ["backend", "tools", "tests"]
+# backend/ is on sys.path at runtime (pytest pythonpath, sys.path in tools);
+# mypy needs telling separately so bare `from comparison import ...` resolves.
+mypy_path = "backend"
+
+[tool.ruff]
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["ALL"]
+# D203/D213: mutually exclusive with D211/D212, which ruff prefers.
+# CPY001: no copyright header on a POC.
+# COM812/ISC001: conflict with the formatter.
+ignore = ["D203", "D213", "CPY001", "COM812", "ISC001"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert, name things descriptively, and hold no docstrings per function.
+# FBT003: the warning attestation genuinely is a positional bool.
+# RUF001: curly quotes are the input under test, not a typo.
+"tests/**" = ["S101", "D103", "PLR2004", "INP001", "FBT003", "RUF001", "ANN202"]
+# Dev script: prints to the terminal by design, not a library.
+"tools/**" = ["T201", "INP001"]
+# Module self-checks assert deliberately; they are the runnable check for logic
+# that has no separate test module.
+"backend/fixtures/**" = ["S101", "T201", "INP001"]
+# backend/ is a sys.path root, not a package -- an __init__.py there collides
+# with mypy_path. INP001 does not apply.
+"backend/*.py" = ["INP001"]
+"backend/warning_text.py" = ["S101", "T201", "INP001"]

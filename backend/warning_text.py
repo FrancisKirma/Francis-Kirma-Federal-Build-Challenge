@@ -38,7 +38,7 @@ def _self_check() -> None:
     """Guard the properties the comparison layer depends on."""
     assert STATUTORY_WARNING.startswith("GOVERNMENT WARNING: (1) According to")
     assert STATUTORY_WARNING.endswith("may cause health problems.")
-    assert "  " not in STATUTORY_WARNING, "no double spaces; exact match is byte-for-byte"
+    assert "  " not in STATUTORY_WARNING, "exact match is byte-for-byte"
     assert "\n" not in STATUTORY_WARNING, "single line; renderer handles wrapping"
 
     title_case = WARNING_VARIANTS["TITLE_CASE"]

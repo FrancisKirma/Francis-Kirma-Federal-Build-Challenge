@@ -16,9 +16,11 @@ TRUTH_KEY: Final = "_label_truth"
 
 
 def versions() -> list[str]:
-    """All dated fixture sets present, oldest first. ISO dates sort chronologically."""
+    """Return all dated fixture sets, oldest first. ISO dates sort chronologically."""
     return sorted(
-        d.name for d in _ROOT.iterdir() if d.is_dir() and (d / "applications.json").exists()
+        d.name
+        for d in _ROOT.iterdir()
+        if d.is_dir() and (d / "applications.json").exists()
     )
 
 
@@ -32,16 +34,19 @@ def version_dir() -> Path:
 
 
 def current_version() -> str:
-    """The dated fixture set in use."""
+    """Return the dated fixture set in use."""
     return version_dir().name
 
 
 def _records() -> list[dict[str, Any]]:
-    return json.loads((version_dir() / "applications.json").read_text())
+    records: list[dict[str, Any]] = json.loads(
+        (version_dir() / "applications.json").read_text()
+    )
+    return records
 
 
 def pending_applications() -> list[dict[str, Any]]:
-    """The queue, as served. Truth keys stripped."""
+    """Return the queue as served, with truth keys stripped."""
     return [{k: v for k, v in r.items() if k != TRUTH_KEY} for r in _records()]
 
 
@@ -49,7 +54,8 @@ def label_path(application_id: str) -> Path:
     """Absolute path to one record's artwork."""
     for record in _records():
         if record["application_id"] == application_id:
-            return version_dir() / record["artwork"]
+            artwork: str = record["artwork"]
+            return version_dir() / artwork
     msg = f"unknown application_id: {application_id}"
     raise KeyError(msg)
 
@@ -58,14 +64,16 @@ def label_truth(application_id: str) -> dict[str, Any]:
     """Ground truth for one record. Tests only — never serve this."""
     for record in _records():
         if record["application_id"] == application_id:
-            return record[TRUTH_KEY]
+            truth: dict[str, Any] = record[TRUTH_KEY]
+            return truth
     msg = f"unknown application_id: {application_id}"
     raise KeyError(msg)
 
 
 def _self_check() -> None:
     queue = pending_applications()
-    assert len(queue) == 8, len(queue)
+    expected_records = 8
+    assert len(queue) == expected_records, len(queue)
 
     # The one property worth a guard: the answer key must not leak into the queue.
     serialized = json.dumps(queue)
@@ -90,7 +98,8 @@ def _self_check() -> None:
         except KeyError:
             pass
         else:
-            raise AssertionError(f"expected KeyError for {missing!r}")
+            message = f"expected KeyError for {missing!r}"
+            raise AssertionError(message)
 
     print("fixtures loader: OK")
 
