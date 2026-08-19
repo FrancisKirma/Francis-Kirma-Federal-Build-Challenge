@@ -9,6 +9,11 @@ import { Queue } from "./features/queue/Queue";
 import { QueueTabs, type QueueTab } from "./features/queue/QueueTabs";
 import { Review } from "./features/review/Review";
 import { Upload } from "./features/upload/Upload";
+import {
+  csvFilename,
+  downloadCsv,
+  toCsv,
+} from "./services/decisionExport";
 import { useApplications } from "./hooks/useApplications";
 import { useBatchVerification } from "./hooks/useBatchVerification";
 import { useDecisions } from "./hooks/useDecisions";
@@ -109,21 +114,44 @@ export function App(): React.ReactElement {
               Check a label that is not on the list
             </Button>
             {counts.approved + counts.denied > 0 && (
-              <Button
-                type="button"
-                unstyled
-                className="margin-left-3"
-                onClick={() => {
-                  const cleared = counts.approved + counts.denied;
-                  reset();
-                  showToast(
-                    `Cleared ${String(cleared)} decision${cleared === 1 ? "" : "s"}.`,
-                    "info",
-                  );
-                }}
-              >
-                Clear all decisions
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  outline
+                  className="margin-left-2"
+                  onClick={() => {
+                    const exportedAt = new Date().toISOString();
+                    const decided = counts.approved + counts.denied;
+                    downloadCsv(
+                      toCsv(applications, decisions, exportedAt),
+                      csvFilename(exportedAt),
+                    );
+                    showToast(
+                      `Downloaded ${String(decided)} decision${
+                        decided === 1 ? "" : "s"
+                      } as a spreadsheet.`,
+                      "info",
+                    );
+                  }}
+                >
+                  Download decisions
+                </Button>
+                <Button
+                  type="button"
+                  unstyled
+                  className="margin-left-3"
+                  onClick={() => {
+                    const cleared = counts.approved + counts.denied;
+                    reset();
+                    showToast(
+                      `Cleared ${String(cleared)} decision${cleared === 1 ? "" : "s"}.`,
+                      "info",
+                    );
+                  }}
+                >
+                  Clear all decisions
+                </Button>
+              </>
             )}
           </div>
         </>

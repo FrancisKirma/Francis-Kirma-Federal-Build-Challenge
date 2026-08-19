@@ -244,31 +244,53 @@ consistent set; the newest dated folder is the active one.
  
 ```
 .
+├── app.py                        # deployment entrypoint
+├── build.py                      # builds the frontend during deployment
 ├── backend/
-│   ├── comparison.py         # normalized / numeric / exact strategies, pure functions
-│   ├── models.py             # Pydantic v2: ClaimedFields, ExtractedFields, FieldResult
-│   ├── warning_text.py       # canonical statutory warning text, 27 CFR 16.21
-│   └── fixtures/
-│       ├── __init__.py       # queue loader; strips the answer key before serving
-│       ├── check_fixtures.py # validates each record against its own expectations
-│       └── 2026-08-18/
-│           ├── applications.json
-│           └── labels/       # eight rendered PNGs
+│   ├── main.py                   # app assembly; serves the built frontend
+│   ├── constants.py              # statutory warning text, 27 CFR 16.21
+│   ├── api/
+│   │   ├── routes.py             # paths and methods; delegates to controllers
+│   │   └── controllers.py        # request handling, error to status mapping
+│   ├── services/
+│   │   ├── verification.py       # orchestration: read, compare, retry, batch
+│   │   ├── extraction.py         # vision provider call, provider-agnostic
+│   │   └── comparison.py         # normalized / numeric / exact strategies
+│   ├── models/
+│   │   ├── domain.py             # Status, FieldResult, VerificationResult
+│   │   └── api.py                # request and response bodies
+│   ├── repositories/
+│   │   └── applications.py       # queue loader; strips the answer key
+│   └── fixtures/2026-08-18/
+│       ├── applications.json
+│       └── labels/               # eight rendered PNGs
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx               # view switching
+│   │   ├── components/           # layout, results, feedback
+│   │   ├── features/             # queue, review, batch, upload
+│   │   ├── hooks/                # verification, decisions, batch, toast
+│   │   ├── services/             # API client, errors, CSV export
+│   │   └── styles/
+│   └── scripts/                  # copies the USWDS assets actually used
 ├── tools/
-│   ├── generate_labels.py    # renders labels/ from _label_truth.printed
-│   └── label_template.html
-├── tests/
-│   └── test_comparison.py    # 50 tests; fixture table plus hand-written edge cases
-├── .github/workflows/ci.yml  # tsc, eslint, vitest, mypy, ruff, pytest
-├── AGENTS.md                 # standing rules for the build
-└── pyproject.toml            # deps, mypy strict, ruff ALL, pytest config
+│   ├── generate_labels.py        # renders labels/ from _label_truth.printed
+│   ├── record_cassettes.py       # records real model responses for tests
+│   └── check_fixtures.py         # validates each record against its expectations
+├── tests/                        # 134 backend tests, plus cassettes
+├── .github/workflows/ci.yml      # tsc, eslint, vitest, mypy, ruff, pytest
+├── AGENTS.md                     # standing rules for the build
+├── vercel.json                   # region, function limits, bundle exclusions
+└── pyproject.toml                # deps, mypy strict, ruff ALL, Vercel config
 ```
 
-Not yet built: `extraction.py` (VLM call), the FastAPI app and routes, and the React
-frontend. The order is deliberate — `comparison.py` holds no model dependency and is fully
-unit-testable against hand-written extraction dictionaries, so it is built and tested
-before the extraction layer is wired up.
- 
+The layering is the point: `routes` declare paths, `controllers` own HTTP, and `services`
+hold the work. `services/verification.py` imports no FastAPI, and `services/comparison.py`
+holds no model dependency — both are testable without a server or a network, which is why
+comparison was built and tested before extraction was wired up.
+
+Frontend tests live beside what they test: 91 across components, hooks, and services.
+
 Deployment target is Vercel: the Python backend runs as serverless functions and the React
 bundle is served as static output, so there is one target and no second service to keep
 running.
@@ -284,27 +306,110 @@ running.
  
 ---
  
-## Setup
+## Running it locally
 
-Requires Python 3.13 and [uv](https://docs.astral.sh/uv/). Chrome is needed only to
-regenerate label artwork; the rendered PNGs are committed.
+### What you need
+
+| | |
+|---|---|
+| Python 3.13 | pinned in `.python-version` |
+| [uv](https://docs.astral.sh/uv/) | `brew install uv`, or see the uv docs |
+| Node 22+ | for the frontend (built with 24) |
+| An OpenAI API key | needed only to read a label; the queue works without one |
+| Chrome | only to regenerate label artwork, which is already committed |
+
+### 1. Install
 
 ```bash
-uv sync                                        # install dependencies
-uv run pytest -q                               # 50 tests
-uv run mypy .                                  # strict type check
-uv run ruff check .                            # lint
+uv sync                    # Python dependencies
+cd frontend && npm ci      # frontend dependencies
+cd ..
 ```
 
-Fixture and data checks:
+### 2. Add your API key
 
 ```bash
-uv run python backend/fixtures/check_fixtures.py   # each record vs its expectations
-uv run python backend/fixtures/__init__.py         # loader, and the answer-key guard
-uv run python backend/warning_text.py              # statutory text invariants
+cp .env.example .env
 ```
 
-Regenerating label artwork (only needed after editing `_label_truth.printed`):
+Then put your key in `.env`:
+
+```
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+AI_MODEL=gpt-4.1-mini
+```
+
+`.env` is gitignored and must never be committed. The key is read from the environment at
+call time and is never sent to the browser or included in any response.
+
+### 3. Run it
+
+Two terminals. The backend serves the API on port 8000:
+
+```bash
+set -a; . ./.env; set +a          # load the key into this shell
+uv run uvicorn app:app --port 8000 --reload
+```
+
+The frontend serves the UI on port 5173 and proxies `/api` to the backend:
+
+```bash
+cd frontend && npm run dev
+```
+
+Open **http://localhost:5173**.
+
+### Running it as one server
+
+The deployed app is a single service: FastAPI serves the built React bundle. To run that
+shape locally — useful for checking a production build:
+
+```bash
+cd frontend && npm run build && cd ..
+set -a; . ./.env; set +a
+uv run uvicorn app:app --port 8000
+```
+
+Open **http://localhost:8000**. Rebuild the frontend after any change; there is no
+hot reload in this mode.
+
+---
+
+## Checks
+
+### Backend
+
+```bash
+uv run pytest -q           # 134 tests
+uv run mypy .              # strict type check
+uv run ruff check .        # lint, select = ["ALL"]
+```
+
+### Frontend
+
+```bash
+cd frontend
+npx tsc --noEmit           # strict type check
+npx eslint .               # strictTypeChecked
+npx vitest run             # 91 tests
+npx vite build             # production build
+```
+
+All six run in CI and block a merge.
+
+### Data and fixtures
+
+```bash
+uv run python tools/check_fixtures.py               # each record vs its expectations
+uv run python backend/repositories/applications.py  # queue loader, and the answer-key guard
+uv run python backend/constants.py                  # statutory warning text invariants
+```
+
+### Regenerating test artwork
+
+Only needed after editing a `_label_truth.printed` block. The PNGs are committed, so this
+is not part of the build.
 
 ```bash
 uv run python tools/generate_labels.py                       # all eight
@@ -312,13 +417,38 @@ uv run python tools/generate_labels.py --only TTB-2024-0044  # one
 CHROME=/path/to/chrome uv run python tools/generate_labels.py
 ```
 
+### Re-recording model responses
+
+The tests replay real vision-model responses from `tests/cassettes/`, so the suite runs
+offline and costs nothing. Re-record after changing the prompt or the model — this one does
+spend API calls.
+
+```bash
+uv run python tools/record_cassettes.py
+```
+
+---
+
+## Deploying
+
+The app deploys to Vercel as a single Python function serving the built frontend.
+
+- `app.py` is the entrypoint. It puts `backend/` on the import path, which the modules
+  expect, before importing the FastAPI app.
+- `build.py` runs during deployment: `npm ci`, then the USWDS asset copy, then `vite build`.
+- `pyproject.toml` declares both under `[tool.vercel]`.
+
+Set `OPENAI_API_KEY`, `AI_PROVIDER`, and `AI_MODEL` as project environment variables in the
+Vercel dashboard — never in a committed file.
+
 ### Quality gates
 
-`mypy --strict`, `ruff` with `select = ["ALL"]`, and pytest all run in CI and block a
-merge. The government warning's exact-match behaviour is mutation-tested: making the
-comparison case-insensitive, parsing proof instead of ABV, dropping unit conversion, or
-treating a blank reading as a mismatch each break the suite.
- 
+`mypy --strict`, `ruff` with `select = ["ALL"]`, `tsc --noEmit`, `eslint` on
+`strictTypeChecked`, and both test suites run in CI. The government warning's exact-match
+behaviour is mutation-tested: making the comparison case-insensitive, parsing proof instead
+of ABV, dropping unit conversion, or treating a blank reading as a mismatch each break the
+suite.
+
 ## Trade-offs and limitations
  
 - **Typographic compliance is not checked.** See the cut list. The warning's wording and
@@ -330,6 +460,18 @@ treating a blank reading as a mismatch each break the suite.
 - **Production network risk.** Marcus reported that the agency firewall blocked the previous
   vendor's ML endpoints. A production deployment would need either an allowlisted endpoint
   or in-boundary inference; this prototype assumes ordinary outbound access.
+- **Decisions are held in the page, not stored.** The agent's approvals and rejections live
+  in browser state for the length of a session and are gone on refresh. This is deliberate:
+  the deployment target is serverless, so a module-level store on the backend would vanish
+  between requests and look like a bug rather than a documented limit, and a real record
+  needs a database that a proof of concept holding no sensitive data should not pretend to
+  have.
+- **The CSV export is a snapshot, not a record.** "Download decisions" writes the current
+  session's decisions to a file so the work is not trapped in the tab — it is the honest
+  half of an audit trail, not the whole of one. Nothing is written server-side, the file is
+  not signed or timestamped by anything trustworthy, and a decision made after the download
+  is not in it. A production system would record each decision alongside the extraction that
+  produced it, in a database, at the moment it was made.
 - **No audit trail.** A production tool would need to record what the model extracted and
   what the agent decided, for both compliance and model-drift monitoring.
 - **Composed labels, not real artwork.** The fixtures are generated, so they are cleaner and
@@ -355,6 +497,9 @@ treating a blank reading as a mismatch each break the suite.
 - **Typographic verification** of the warning statement — relative font size and weight.
 - **Confidence surfacing**, separating "the model was unsure" from "the values disagree."
   Those call for different agent actions.
+- **Server-side decision records.** The CSV export shows the shape of the data worth
+  keeping; storing it properly means a database, a record of the extraction behind each
+  decision, and an identity to attribute it to.
 - **Queue prioritisation**, ordering likely-problem applications first. Not omission —
   every application is still reviewed.
 - **Real COLA artwork.** The Public COLA Registry holds approved label images back to 1999.
