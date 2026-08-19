@@ -26,7 +26,14 @@ function application(
 }
 
 function decision(over: Partial<Decision> = {}): Decision {
-  return { status: "approved", decidedAt: AT, flaggedFields: [], ...over };
+  return {
+    status: "approved",
+    decidedAt: AT,
+    flaggedFields: [],
+    reason: null,
+    note: "",
+    ...over,
+  };
 }
 
 describe("escapeCell", () => {

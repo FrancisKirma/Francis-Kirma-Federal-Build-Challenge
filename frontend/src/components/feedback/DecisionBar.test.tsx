@@ -1,45 +1,38 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { DecisionBar } from "./DecisionBar";
-import type { VerificationResponse } from "../../types";
+import type { Decision, VerificationResponse } from "../../types";
 
 const CLEAN: VerificationResponse = {
   application_id: "TTB-2024-0041",
   flagged: false,
   elapsed_seconds: 2,
-  fields: [
-    { field: "brand_name", claimed: "A", extracted: "A", status: "match" },
-  ],
+  fields: [{ field: "brand_name", claimed: "A", extracted: "A", status: "match" }],
 };
 
 const FLAGGED: VerificationResponse = {
-  application_id: "TTB-2024-0044",
+  ...CLEAN,
+  application_id: "TTB-2024-0043",
   flagged: true,
-  elapsed_seconds: 3,
   fields: [
-    { field: "brand_name", claimed: "A", extracted: "A", status: "match" },
     {
-      field: "government_warning",
-      claimed: "True",
-      extracted: "Government Warning:",
+      field: "alcohol_content",
+      claimed: "45%",
+      extracted: "43%",
       status: "mismatch",
     },
   ],
 };
 
-function setup(result: VerificationResponse | null) {
+function setup(result: VerificationResponse | null, existing?: Decision) {
   const onDecide = vi.fn();
-  render(<DecisionBar result={result} existing={undefined} onDecide={onDecide} />);
+  render(<DecisionBar result={result} existing={existing} onDecide={onDecide} />);
   return onDecide;
 }
 
 describe("DecisionBar before a check", () => {
-  it("marks the section as blocked so the reason is scannable", () => {
-    setup(null);
-    expect(screen.getByText("Verify first")).toBeInTheDocument();
-  });
-
   it("locks both decisions until the evidence has been looked at", () => {
     setup(null);
     expect(screen.getByRole("button", { name: "Approve application" })).toBeDisabled();
@@ -53,36 +46,38 @@ describe("DecisionBar before a check", () => {
 });
 
 describe("DecisionBar after a check", () => {
-  it("drops the blocked marker once a result exists", () => {
-    setup(CLEAN);
-    expect(screen.queryByText("Verify first")).not.toBeInTheDocument();
+  it("warns that approving a flagged label will need a reason", () => {
+    setup(FLAGGED);
+    expect(screen.getByText(/needs a recorded reason/)).toBeInTheDocument();
   });
 
-  it("approves a clean label directly", async () => {
-    const onDecide = setup(CLEAN);
-    const { default: userEvent } = await import("@testing-library/user-event");
+  it("says the determination is the agent's when nothing disagrees", () => {
+    setup(CLEAN);
+    expect(screen.getByText(/your determination, not the tool's/)).toBeInTheDocument();
+  });
+
+  it("reports the decision, leaving the reason prompt upstream", async () => {
+    const onDecide = setup(FLAGGED);
     await userEvent.click(screen.getByRole("button", { name: "Approve application" }));
     expect(onDecide).toHaveBeenCalledWith("approved");
   });
 
-  it("routes a flagged approval through a confirmation instead of deciding", () => {
-    setup(FLAGGED);
-    // The approve control opens the confirm dialog rather than deciding outright.
-    // jsdom reports no layout, so focus-trap cannot open the modal here; the
-    // dialog's own behaviour is covered by the browser pass.
-    const approve = screen.getByRole("button", { name: "Approve application" });
-    expect(approve).toHaveAttribute("data-open-modal");
-  });
-
-  it("names what disagrees before letting the agent override it", () => {
-    setup(FLAGGED);
-    expect(screen.getByText("Government warning")).toBeInTheDocument();
-  });
-
-  it("rejects without a confirmation step", async () => {
+  it("reports a rejection the same way", async () => {
     const onDecide = setup(FLAGGED);
-    const { default: userEvent } = await import("@testing-library/user-event");
     await userEvent.click(screen.getByRole("button", { name: "Reject application" }));
     expect(onDecide).toHaveBeenCalledWith("denied");
+  });
+
+  it("shows the recorded reason when a decision is being revisited", () => {
+    setup(FLAGGED, {
+      status: "denied",
+      decidedAt: "2026-08-19T14:32:00Z",
+      flaggedFields: ["alcohol_content"],
+      reason: "Values on the label do not match the form",
+      note: "",
+    });
+    expect(
+      screen.getByText(/Values on the label do not match the form/),
+    ).toBeInTheDocument();
   });
 });

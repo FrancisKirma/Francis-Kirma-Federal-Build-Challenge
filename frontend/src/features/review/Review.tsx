@@ -1,16 +1,19 @@
-import { Button, Grid } from "@trussworks/react-uswds";
+import { useState } from "react";
+import { Button, ButtonGroup } from "@trussworks/react-uswds";
 
-import { DecisionBar } from "../../components/feedback/DecisionBar";
-import { ResultAlert } from "../../components/feedback/ResultAlert";
 import { StatusAlert } from "../../components/feedback/StatusAlert";
-import { ResultTable } from "../../components/results/ResultTable";
-import { labelImageUrl } from "../../services/api";
+import { FIELD_ORDER, FIELD_LABELS } from "../../types";
 import type {
   ApplicationSummary,
   Decision,
   DecisionStatus,
   VerificationResponse,
 } from "../../types";
+import { cx } from "../../styles/classNames";
+import { ArtworkViewer } from "./ArtworkViewer";
+import { EvidenceRow } from "./EvidenceRow";
+import { zoomFor } from "./fieldRegions";
+import styles from "./review.module.scss";
 
 interface ReviewProps {
   application: ApplicationSummary;
@@ -18,11 +21,29 @@ interface ReviewProps {
   error: string | null;
   busy: boolean;
   decision: Decision | undefined;
+  /** Where the agent came from, and their place in it. */
+  listName: string;
+  position: { index: number; total: number } | null;
   onVerify: () => void;
   onBack: () => void;
-  /** Names where Back returns to, since a review can be opened from two places. */
-  backLabel?: string;
   onDecide: (status: DecisionStatus) => void;
+}
+
+function claimedText(field: string, application: ApplicationSummary): string {
+  if (field === "government_warning") {
+    return application.submitted.government_warning ? "Stated as present" : "Not stated";
+  }
+  return String(application.submitted[field as keyof typeof application.submitted]);
+}
+
+/** Problems first once checked, so the agent reads what matters first. */
+function orderedFields(result: VerificationResponse | null): string[] {
+  if (result === null) return [...FIELD_ORDER];
+  const rank = (field: string): number => {
+    const found = result.fields.find((f) => f.field === field);
+    return found === undefined || found.status === "match" ? 1 : 0;
+  };
+  return [...FIELD_ORDER].sort((a, b) => rank(a) - rank(b));
 }
 
 export function Review({
@@ -31,104 +52,181 @@ export function Review({
   error,
   busy,
   decision,
+  listName,
+  position,
   onVerify,
   onBack,
-  backLabel = "Back to the list",
   onDecide,
 }: ReviewProps): React.ReactElement {
+  const [focusField, setFocusField] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+
+  const problems = result?.fields.filter((f) => f.status !== "match") ?? [];
+
+  const hint =
+    result === null
+      ? "Verify the label first. A decision should follow a look at the evidence."
+      : result.flagged
+        ? "Approving this needs a recorded reason, because something does not match."
+        : "Approving or rejecting is your determination, not the tool's.";
+
   return (
     <section>
-      <Button type="button" unstyled onClick={onBack} className="margin-bottom-2">
-        &larr; {backLabel}
-      </Button>
-
-      <div className="display-flex flex-align-center flex-justify margin-bottom-2 flex-wrap">
-        <div>
-          <h2 className="font-heading-lg margin-bottom-0">{application.applicant}</h2>
-          <p className="font-body-md text-base-dark margin-y-0">
-            Application {application.application_id}
-          </p>
-        </div>
-        {/* Reading the label costs a call to the vision model, so it happens when
-            the agent asks for it rather than on every glance at an application. */}
-        <Button type="button" size="big" onClick={onVerify} disabled={busy}>
-          {busy
-            ? "Checking the label…"
-            : result === null
-              ? "Verify this label"
-              : "Check it again"}
+      <div className={styles.contextBar}>
+        <Button type="button" outline onClick={onBack}>
+          <span aria-hidden="true">←</span> Back to the list
         </Button>
+        <span className="font-body-sm text-base-dark">
+          {listName} <span className="margin-x-05">/</span>
+          <span className={cx("text-bold text-ink", styles.mono)}>
+            {application.application_id}
+          </span>
+        </span>
+        {position !== null && (
+          <span className={cx("font-body-sm text-base-dark", styles.position)}>
+            {position.index} of {position.total} in this list
+          </span>
+        )}
+        <span className="font-body-3xs text-base">
+          Press <kbd className={styles.kbd}>Esc</kbd> to go back
+        </span>
       </div>
 
-      {/* The decision sits above the table: the agent should not have to scroll
-          past the evidence to act on it. */}
-      <DecisionBar result={result} existing={decision} onDecide={onDecide} />
+      <div className={styles.body}>
+        <section className={styles.panel} aria-label="Comparison">
+          <header className={styles.evidenceHeader}>
+            <div>
+              <h2 className="font-heading-md margin-y-0">{application.applicant}</h2>
+              <p className="font-body-3xs text-base-dark margin-y-0">
+                Application {application.application_id} · filed{" "}
+                {application.submitted_date}
+              </p>
+            </div>
+            <Button type="button" onClick={onVerify} disabled={busy}>
+              {busy ? "Checking…" : result === null ? "Verify this label" : "Check it again"}
+            </Button>
+          </header>
 
-      <div aria-live="polite" aria-atomic="true" className="margin-top-2">
-        {busy && (
-          <StatusAlert type="info" heading="Checking this label">
-            Reading the picture and comparing it with the form. This takes a few
-            seconds.
-          </StatusAlert>
-        )}
-        {error !== null && (
-          <StatusAlert
-            type="error"
-            heading="Could not check this label"
-            action={
-              <Button type="button" onClick={onVerify}>
-                Try again
-              </Button>
-            }
-          >
-            {error}
-          </StatusAlert>
-        )}
-        {result && !busy && <ResultAlert result={result} />}
-      </div>
+          <div aria-live="polite" aria-atomic="true">
+            {busy && (
+              <StatusAlert type="info" heading="Checking this label">
+                Reading the picture and comparing it with the form.
+              </StatusAlert>
+            )}
+            {error !== null && (
+              <StatusAlert
+                type="error"
+                heading="Could not check this label"
+                action={
+                  <Button type="button" onClick={onVerify}>
+                    Try again
+                  </Button>
+                }
+              >
+                {error}
+              </StatusAlert>
+            )}
+            {result && !busy && (
+              <div className={cx(styles.verdict, result.flagged && styles.verdictFlagged)}>
+                <p className="font-body-sm text-bold margin-y-0">
+                  {problems.length === 0
+                    ? "Everything matches"
+                    : `${String(problems.length)} item${
+                        problems.length === 1 ? "" : "s"
+                      } need${problems.length === 1 ? "s" : ""} your attention`}
+                </p>
+                <p className="font-body-sm margin-y-0">
+                  {problems.length === 0
+                    ? "All five items on the form match the picture of the label."
+                    : `${problems
+                        .map((f) => FIELD_LABELS[f.field] ?? f.field)
+                        .join(", ")} — listed first below.`}
+                </p>
+              </div>
+            )}
+          </div>
 
-      <Grid row gap className="margin-top-3">
-        <Grid tablet={{ col: 7 }}>
-          <h3 className="font-heading-md margin-bottom-1">
-            What the form says, and what the label shows
-          </h3>
-          {result === null && !busy && (
-            <p className="font-body-md text-base-dark margin-top-0">
-              Choose <strong>Verify this label</strong> to read the picture and fill
-              in the last two columns.
-            </p>
-          )}
-          {result !== null && !busy && (
-            <p className="font-body-sm text-base-dark margin-top-0 margin-bottom-1">
-              Showing the last check of this label. Choose{" "}
-              <strong>Check it again</strong> to read the picture afresh.
-            </p>
-          )}
-          <ResultTable
-            claimed={application.submitted}
-            fields={result?.fields ?? null}
-            busy={busy}
-            claimedHeading="On the form"
-            caption="Comparison of claimed and printed values"
-          />
+          {orderedFields(result).map((field) => (
+            <EvidenceRow
+              key={field}
+              field={field}
+              claimed={claimedText(field, application)}
+              result={result?.fields.find((f) => f.field === field)}
+              busy={busy}
+              focused={focusField === field}
+              onFocus={() => {
+                setFocusField(field);
+                setZoom(zoomFor(field));
+              }}
+            />
+          ))}
+
           {result && (
-            <p className="font-body-sm text-base-dark margin-top-1">
-              Checked in {result.elapsed_seconds.toFixed(1)} seconds. This tool
-              reports what it read; the determination is yours.
-            </p>
+            <footer className={cx(styles.evidenceFooter, "font-body-3xs text-base-dark")}>
+              Checked in {result.elapsed_seconds.toFixed(1)} seconds. Select a row to
+              find it on the label. This tool reports what it read; the determination
+              is yours.
+            </footer>
           )}
-        </Grid>
-        <Grid tablet={{ col: 5 }}>
-          <h3 className="font-heading-md margin-bottom-1">
-            The picture that was sent in
-          </h3>
-          <img
-            src={labelImageUrl(application.application_id)}
-            alt={`Label artwork submitted for ${application.application_id}`}
-            className="width-full border-1px border-base-lighter"
+        </section>
+
+        <div className={styles.sticky}>
+          <ArtworkViewer
+            applicationId={application.application_id}
+            focusField={focusField}
+            zoom={zoom}
+            onZoom={setZoom}
+            onFit={() => {
+              setFocusField(null);
+              setZoom(1);
+            }}
           />
-        </Grid>
-      </Grid>
+        </div>
+      </div>
+
+      <div className={styles.dock}>
+        <div className={styles.dockInner}>
+          <div>
+            <p className="font-body-sm text-bold margin-y-0">
+              Your decision on {application.application_id}
+            </p>
+            <p className="font-body-3xs text-base-dark margin-y-0">
+              {decision !== undefined
+                ? `Already ${
+                    decision.status === "approved" ? "approved" : "rejected"
+                  }${decision.reason === null ? "" : ` — ${decision.reason}`}. Choosing again replaces that.`
+                : hint}
+            </p>
+          </div>
+          <div className={styles.dockActions}>
+            <span className={cx("font-body-3xs text-base", styles.shortcutHint)}>
+              <kbd className={styles.kbd}>A</kbd> approve ·{" "}
+              <kbd className={styles.kbd}>R</kbd> reject
+            </span>
+            <ButtonGroup>
+              <Button
+                type="button"
+                disabled={result === null}
+                onClick={() => {
+                  onDecide("approved");
+                }}
+              >
+                Approve application
+              </Button>
+              <Button
+                type="button"
+                secondary
+                disabled={result === null}
+                onClick={() => {
+                  onDecide("denied");
+                }}
+              >
+                Reject application
+              </Button>
+            </ButtonGroup>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

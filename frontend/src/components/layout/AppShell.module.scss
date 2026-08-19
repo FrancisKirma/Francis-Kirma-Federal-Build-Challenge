@@ -1,0 +1,31 @@
+/**
+ * The demo pill rides inside the official-website banner.
+ *
+ * The banner is a federal standard and is not ours to reword, so the
+ * qualification is placed within the same visual statement instead: a reader
+ * cannot take in "An official website of the United States government" without
+ * also taking in that this is not one.
+ */
+.bannerRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  background: #f0f0f0;
+
+  > :first-child {
+    flex: 1 1 auto;
+  }
+}
+
+.demoPill {
+  padding: 2px 8px;
+  margin-right: 1rem;
+  background: #ffbe2e;
+  color: #1b1b1b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}

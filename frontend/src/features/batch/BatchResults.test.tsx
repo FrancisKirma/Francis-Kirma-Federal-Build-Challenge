@@ -73,7 +73,7 @@ describe("BatchResults as a worklist", () => {
       new Map([
         [
           "TTB-2024-0044",
-          { status: "approved", decidedAt: "", flaggedFields: ["brand_name"] },
+          { status: "approved", decidedAt: "", flaggedFields: ["brand_name"], reason: null, note: "" },
         ],
       ]),
     );
@@ -84,7 +84,7 @@ describe("BatchResults as a worklist", () => {
   it("sinks decided labels so what is left stays at the top", () => {
     setup(
       new Map([
-        ["TTB-2024-0048", { status: "denied", decidedAt: "", flaggedFields: [] }],
+        ["TTB-2024-0048", { status: "denied", decidedAt: "", flaggedFields: [], reason: null, note: "" }],
       ]),
     );
     // 0048 would otherwise sort first as the unreadable one.
@@ -94,7 +94,7 @@ describe("BatchResults as a worklist", () => {
   it("says how far through the batch the agent is", () => {
     setup(
       new Map([
-        ["TTB-2024-0041", { status: "approved", decidedAt: "", flaggedFields: [] }],
+        ["TTB-2024-0041", { status: "approved", decidedAt: "", flaggedFields: [], reason: null, note: "" }],
       ]),
     );
     expect(screen.getByText(/You have decided 1 of 3/)).toBeInTheDocument();
@@ -103,7 +103,7 @@ describe("BatchResults as a worklist", () => {
   it("offers a decided row a way back in rather than hiding it", () => {
     setup(
       new Map([
-        ["TTB-2024-0041", { status: "approved", decidedAt: "", flaggedFields: [] }],
+        ["TTB-2024-0041", { status: "approved", decidedAt: "", flaggedFields: [], reason: null, note: "" }],
       ]),
     );
     expect(screen.getByRole("button", { name: "Open again" })).toBeInTheDocument();

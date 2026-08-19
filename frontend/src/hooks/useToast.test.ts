@@ -3,6 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useToast } from "./useToast";
 
+const APPROVED = {
+  applicationId: "TTB-2024-0041",
+  applicant: "Old Tom Distillery LLC",
+  status: "approved" as const,
+  reason: null,
+};
+
 beforeEach(() => {
   vi.useFakeTimers();
 });
@@ -12,26 +19,39 @@ afterEach(() => {
 });
 
 describe("useToast", () => {
-  it("holds nothing until something is confirmed", () => {
+  it("holds nothing until something is decided", () => {
     const { result } = renderHook(() => useToast());
     expect(result.current.toast).toBeNull();
   });
 
-  it("shows the message it was given", () => {
+  it("names the application and the outcome", () => {
     const { result } = renderHook(() => useToast());
     act(() => {
-      result.current.show("TTB-2024-0041 marked approved.");
+      result.current.show(APPROVED);
     });
-    expect(result.current.toast?.message).toBe("TTB-2024-0041 marked approved.");
+    expect(result.current.toast?.applicationId).toBe("TTB-2024-0041");
+    expect(result.current.toast?.status).toBe("approved");
+  });
+
+  it("carries the recorded reason when there was one", () => {
+    const { result } = renderHook(() => useToast());
+    act(() => {
+      result.current.show({
+        ...APPROVED,
+        status: "denied",
+        reason: "Warning statement is not compliant",
+      });
+    });
+    expect(result.current.toast?.reason).toBe("Warning statement is not compliant");
   });
 
   it("clears itself so a stale confirmation does not linger", () => {
     const { result } = renderHook(() => useToast());
     act(() => {
-      result.current.show("done");
+      result.current.show(APPROVED);
     });
     act(() => {
-      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(6000);
     });
     expect(result.current.toast).toBeNull();
   });
@@ -39,7 +59,7 @@ describe("useToast", () => {
   it("can be dismissed before it expires", () => {
     const { result } = renderHook(() => useToast());
     act(() => {
-      result.current.show("done");
+      result.current.show(APPROVED);
     });
     act(() => {
       result.current.dismiss();
@@ -47,32 +67,31 @@ describe("useToast", () => {
     expect(result.current.toast).toBeNull();
   });
 
-  it("keeps only the latest outcome when decisions come quickly", () => {
+  it("replaces rather than stacks when decisions come quickly", () => {
     const { result } = renderHook(() => useToast());
     act(() => {
-      result.current.show("first");
+      result.current.show(APPROVED);
     });
     act(() => {
-      result.current.show("second");
+      result.current.show({ ...APPROVED, applicationId: "TTB-2024-0042" });
     });
-    expect(result.current.toast?.message).toBe("second");
+    expect(result.current.toast?.applicationId).toBe("TTB-2024-0042");
   });
 
-  it("restarts the timer for a new message rather than expiring early", () => {
+  it("restarts the timer for a new decision rather than expiring early", () => {
     const { result } = renderHook(() => useToast());
     act(() => {
-      result.current.show("first");
+      result.current.show(APPROVED);
     });
     act(() => {
-      vi.advanceTimersByTime(4000);
+      vi.advanceTimersByTime(5000);
     });
     act(() => {
-      result.current.show("second");
+      result.current.show({ ...APPROVED, applicationId: "TTB-2024-0042" });
     });
     act(() => {
       vi.advanceTimersByTime(2000);
     });
-    // The second message must still be visible; it has only been up 2s.
-    expect(result.current.toast?.message).toBe("second");
+    expect(result.current.toast?.applicationId).toBe("TTB-2024-0042");
   });
 });

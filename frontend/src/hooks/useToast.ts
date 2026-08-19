@@ -1,33 +1,36 @@
 import { useCallback, useEffect, useState } from "react";
 
+import type { DecisionStatus } from "../types";
+
 export interface Toast {
-  message: string;
-  tone: "success" | "info";
-  /** Changes on every show so a repeated message still re-announces. */
+  applicationId: string;
+  applicant: string;
+  status: DecisionStatus;
+  reason: string | null;
+  /** Changes on every show so a repeated outcome still re-announces. */
   id: number;
 }
 
-/** How long a confirmation stays on screen before clearing itself. */
-const VISIBLE_MS = 5000;
+/** How long a confirmation stays before clearing itself. */
+const VISIBLE_MS = 6000;
 
 interface UseToast {
   toast: Toast | null;
-  show: (message: string, tone?: Toast["tone"]) => void;
+  show: (toast: Omit<Toast, "id">) => void;
   dismiss: () => void;
 }
 
 /**
- * A short confirmation that something was recorded.
+ * The confirmation that a decision was recorded.
  *
- * Deliberately holds one message at a time: a stack of toasts is more to read,
- * and an agent deciding several applications wants the latest outcome, not a
- * history of them.
+ * One at a time: an agent deciding several applications wants the latest
+ * outcome and a way to take it back, not a stack of history to read.
  */
 export function useToast(): UseToast {
   const [toast, setToast] = useState<Toast | null>(null);
 
-  const show = useCallback((message: string, tone: Toast["tone"] = "success") => {
-    setToast({ message, tone, id: Date.now() });
+  const show = useCallback((next: Omit<Toast, "id">) => {
+    setToast({ ...next, id: Date.now() });
   }, []);
 
   const dismiss = useCallback(() => {

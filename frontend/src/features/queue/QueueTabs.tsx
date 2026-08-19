@@ -1,4 +1,5 @@
-import { Button, ButtonGroup } from "@trussworks/react-uswds";
+import { cx } from "../../styles/classNames";
+import styles from "./queue.module.scss";
 
 export type QueueTab = "pending" | "approved" | "denied";
 
@@ -15,9 +16,8 @@ const TABS: { id: QueueTab; label: string }[] = [
 ];
 
 /**
- * USWDS 3 ships no tab component, so this is its segmented-button pattern:
- * real buttons carrying aria-pressed, which screen readers announce as a
- * selected state without inventing a widget role.
+ * Underline tabs rather than segmented buttons: they read as sections of one
+ * list, and the active underline joins the panel below it.
  */
 export function QueueTabs({
   active,
@@ -25,22 +25,20 @@ export function QueueTabs({
   onChange,
 }: QueueTabsProps): React.ReactElement {
   return (
-    <nav aria-label="Filter applications by decision" className="margin-bottom-3">
-      <ButtonGroup type="segmented">
-        {TABS.map((tab) => (
-          <Button
-            key={tab.id}
-            type="button"
-            outline={active !== tab.id}
-            aria-pressed={active === tab.id}
-            onClick={() => {
-              onChange(tab.id);
-            }}
-          >
-            {tab.label} ({counts[tab.id]})
-          </Button>
-        ))}
-      </ButtonGroup>
+    <nav aria-label="Filter applications by decision" className={styles.tabs}>
+      {TABS.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          className={cx(styles.tab, active === tab.id ? styles.tabActive : "")}
+          aria-pressed={active === tab.id}
+          onClick={() => {
+            onChange(tab.id);
+          }}
+        >
+          {tab.label} ({counts[tab.id]})
+        </button>
+      ))}
     </nav>
   );
 }

@@ -1,10 +1,6 @@
-import {
-  GovBanner,
-  GridContainer,
-  Header,
-  SiteAlert,
-  Title,
-} from "@trussworks/react-uswds";
+import { GovBanner, GridContainer, Header, Title } from "@trussworks/react-uswds";
+
+import styles from "./AppShell.module.scss";
 
 /** The government-standard page frame: banner, header, and one content column. */
 export function AppShell({
@@ -20,15 +16,13 @@ export function AppShell({
       <a className="usa-skipnav" href="#main-content">
         Skip to the applications
       </a>
-      {/* The banner below states this is an official government website, which
-          is a claim a prototype cannot make. This says plainly what it is,
-          above the banner rather than by altering it: the banner is a federal
-          standard and is not ours to reword. */}
-      <SiteAlert variant="info" slim showIcon={false} heading="Demonstration only">
-        A proof of concept for evaluation. Not an official TTB system, and no
-        decision recorded here has any legal effect.
-      </SiteAlert>
-      <GovBanner />
+      {/* The banner states this is an official government website, which a
+          prototype cannot claim. The pill sits inside the same statement so the
+          qualification is read with it rather than after it. */}
+      <div className={styles.bannerRow}>
+        <GovBanner />
+        <span className={styles.demoPill}>Demo only — not a government site</span>
+      </div>
       <Header basic>
         <div className="usa-nav-container">
           <div className="usa-navbar">
@@ -39,8 +33,8 @@ export function AppShell({
                   pays a start-up cost the rest do not. Saying so beforehand
                   turns an unexplained wait into an expected one. */}
               <p className="font-body-xs text-base-dark margin-y-0 text-normal">
-                The first label you check may take a few seconds longer than the
-                rest.
+                Prototype with sample applications. The first label you check may
+                take a few seconds longer than the rest.
               </p>
             </Title>
           </div>

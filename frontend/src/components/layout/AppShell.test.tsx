@@ -20,18 +20,22 @@ describe("AppShell", () => {
     expect(container.querySelector("#main-content")).not.toBeNull();
   });
 
-  it("says plainly that this is not a real government system", () => {
+  it("says plainly that this is not a real government site", () => {
     render(<AppShell>content</AppShell>);
-    expect(screen.getByText(/Demonstration only/i)).toBeInTheDocument();
-    expect(screen.getByText(/Not an official TTB system/i)).toBeInTheDocument();
+    expect(screen.getByText(/Demo only — not a government site/i)).toBeInTheDocument();
   });
 
-  it("puts the demo notice before the official-website banner", () => {
+  it("keeps the demo pill inside the official-website statement", () => {
     const { container } = render(<AppShell>content</AppShell>);
-    const text = container.textContent;
-    expect(text.indexOf("Demonstration only")).toBeLessThan(
-      text.indexOf("An official website"),
-    );
+    const banner = container.querySelector(".usa-banner");
+    const pill = screen.getByText(/Demo only/i);
+    // The qualification must be read with the claim, not somewhere else.
+    expect(banner?.parentElement?.contains(pill)).toBe(true);
+  });
+
+  it("marks the sample data as a prototype in the header", () => {
+    render(<AppShell>content</AppShell>);
+    expect(screen.getByText(/Prototype with sample applications/i)).toBeInTheDocument();
   });
 
   it("warns that the first check is slower, before anyone waits on it", () => {

@@ -17,6 +17,8 @@ const HEADERS = [
   "decision",
   "decided_at",
   "fields_not_matching",
+  "reason",
+  "note",
   "exported_at",
 ] as const;
 
@@ -53,6 +55,8 @@ export function toCsv(
         decision.flaggedFields
           .map((field) => FIELD_LABELS[field] ?? field)
           .join("; "),
+        decision.reason ?? "",
+        decision.note,
         exportedAt,
       ].map(escapeCell);
     })

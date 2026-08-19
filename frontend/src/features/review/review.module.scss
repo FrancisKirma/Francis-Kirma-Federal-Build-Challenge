@@ -1,0 +1,283 @@
+/**
+ * Review layout: evidence rows beside sticky artwork, decision docked.
+ *
+ * The wide four-column table forced the government warning to ~480px and pushed
+ * the decision below every viewport. Rows stack the two values instead, so a
+ * long field costs height inside one row rather than across the whole table.
+ */
+
+.panel {
+  background: #ffffff;
+  border: 1px solid #dfe1e2;
+}
+
+.smallCaps {
+  font-size: 0.75rem;
+  color: #71767a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mono {
+  font-family: "Roboto Mono", ui-monospace, monospace;
+  font-size: 0.83rem;
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  color: #71767a;
+}
+
+/* --- Context bar --------------------------------------------------------- */
+
+.contextBar {
+  background: #ffffff;
+  border: 1px solid #dfe1e2;
+  border-left: 6px solid #005ea2;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.position {
+  margin-left: auto;
+}
+
+.kbd {
+  font-family: "Roboto Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  background: #f0f0f0;
+  border: 1px solid #dfe1e2;
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+/* --- Layout -------------------------------------------------------------- */
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* Agents work at a desk, but a narrow window must not hide the artwork. */
+@media (max-width: 900px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.evidenceHeader {
+  padding: 14px 16px;
+  border-bottom: 1px solid #dfe1e2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.verdict {
+  padding: 10px 16px;
+  border-bottom: 1px solid #dfe1e2;
+  border-left: 4px solid #008817;
+  background: rgba(0, 136, 23, 0.05);
+}
+
+.verdictFlagged {
+  border-left-color: #b50909;
+  background: rgba(181, 9, 9, 0.05);
+}
+
+/* --- Evidence rows ------------------------------------------------------- */
+
+.evidenceRow {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid #dfe1e2;
+  border-left: 4px solid transparent;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+
+  &:focus-visible {
+    outline: 0.25rem solid #2491ff;
+    outline-offset: -4px;
+  }
+}
+
+.mismatch {
+  border-left-color: #b50909;
+  background: rgba(181, 9, 9, 0.05);
+}
+
+.unreadable {
+  border-left-color: #936f38;
+  background: rgba(147, 111, 56, 0.07);
+}
+
+/* Focus wins over status: it marks where the artwork is currently zoomed. */
+.focused {
+  border-left-color: #005ea2;
+  background: #eff6fb;
+}
+
+.evidenceTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.valueGrid {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 4px 10px;
+  margin-top: 6px;
+}
+
+.note {
+  display: block;
+  font-size: 0.75rem;
+  color: #71767a;
+  margin-top: 0.5rem;
+}
+
+.pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border: 1px solid currentcolor;
+  white-space: nowrap;
+}
+
+.match {
+  color: #008817;
+}
+
+.pillUnchecked {
+  color: #71767a;
+  border-style: dashed;
+  font-weight: 400;
+}
+
+.evidenceFooter {
+  padding: 10px 16px;
+  border-top: 1px solid #dfe1e2;
+}
+
+/* --- Artwork viewer ------------------------------------------------------ */
+
+.sticky {
+  position: sticky;
+  top: 12px;
+}
+
+.viewerHeader {
+  padding: 10px 12px;
+  border-bottom: 1px solid #dfe1e2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.zoomControls {
+  display: flex;
+  gap: 4px;
+
+  button {
+    padding: 2px 8px;
+    border: 1px solid #dfe1e2;
+    text-decoration: none;
+  }
+}
+
+.viewport {
+  overflow: hidden;
+  background: #edeff0;
+  height: 52vh;
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage {
+  position: relative;
+  transition: transform 220ms ease;
+}
+
+.artwork {
+  display: block;
+  height: 52vh;
+  min-height: 340px;
+  width: auto;
+}
+
+.regionMarker {
+  position: absolute;
+  border: 2px solid #005ea2;
+  /* The outer spread dims everything outside the region. */
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.85),
+    0 0 0 9999px rgba(27, 27, 27, 0.22);
+}
+
+.viewerFooter {
+  padding: 10px 12px;
+  border-top: 1px solid #dfe1e2;
+  font-size: 0.75rem;
+  color: #71767a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage {
+    transition: none;
+  }
+}
+
+/* --- Decision dock ------------------------------------------------------- */
+
+.dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-top: 1px solid #dfe1e2;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 400;
+}
+
+.dockInner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.dockActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shortcutHint {
+  white-space: nowrap;
+}

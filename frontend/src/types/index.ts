@@ -56,7 +56,37 @@ export interface Decision {
   status: DecisionStatus;
   decidedAt: string;
   flaggedFields: string[];
+  /**
+   * Why the agent decided this, when the decision needed one: a rejection, or
+   * an approval over something that did not match. Null for a clean approval,
+   * which needs no justification beyond the evidence.
+   */
+  reason: string | null;
+  note: string;
 }
+
+/** The reasons offered for each kind of decision that requires one. */
+export const DECISION_REASONS: Record<DecisionStatus, string[]> = {
+  approved: [
+    "The difference is acceptable",
+    "The form data was corrected after filing",
+    "Reading is wrong; the label is compliant",
+  ],
+  denied: [
+    "Values on the label do not match the form",
+    "Warning statement is not compliant",
+    "Artwork cannot be read; resubmission needed",
+  ],
+};
+
+/** The order the backend returns fields in, and the order they read best in. */
+export const FIELD_ORDER = [
+  "brand_name",
+  "class_type",
+  "alcohol_content",
+  "net_contents",
+  "government_warning",
+] as const;
 
 /** Plain-language labels; the API's field names are not shown to the agent. */
 export const FIELD_LABELS: Record<string, string> = {

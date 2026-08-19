@@ -1,0 +1,25 @@
+/**
+ * A decision that needs justifying gets a dialog rather than an inline field:
+ * the choice must be deliberate, and the overlay makes the rest of the page
+ * inert while it is made.
+ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.panel {
+  background: #ffffff;
+  max-width: 34rem;
+  width: 100%;
+  padding: 24px;
+  border-top: 6px solid #005ea2;
+  max-height: 90vh;
+  overflow-y: auto;
+}

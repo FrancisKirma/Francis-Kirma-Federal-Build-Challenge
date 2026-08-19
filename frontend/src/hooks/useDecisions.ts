@@ -8,7 +8,11 @@ interface UseDecisions {
     applicationId: string,
     status: DecisionStatus,
     result: VerificationResponse,
+    reason?: string | null,
+    note?: string,
   ) => void;
+  /** Remove one decision, so an accidental keystroke is recoverable. */
+  undo: (applicationId: string) => void;
   reset: () => void;
   counts: Record<"pending" | "approved" | "denied", number>;
 }
@@ -29,7 +33,13 @@ export function useDecisions(total: number): UseDecisions {
   );
 
   const decide = useCallback(
-    (applicationId: string, status: DecisionStatus, result: VerificationResponse) => {
+    (
+      applicationId: string,
+      status: DecisionStatus,
+      result: VerificationResponse,
+      reason: string | null = null,
+      note = "",
+    ) => {
       setDecisions((current) => {
         const next = new Map(current);
         next.set(applicationId, {
@@ -38,12 +48,22 @@ export function useDecisions(total: number): UseDecisions {
           flaggedFields: result.fields
             .filter((field) => field.status !== "match")
             .map((field) => field.field),
+          reason,
+          note,
         });
         return next;
       });
     },
     [],
   );
+
+  const undo = useCallback((applicationId: string) => {
+    setDecisions((current) => {
+      const next = new Map(current);
+      next.delete(applicationId);
+      return next;
+    });
+  }, []);
 
   const reset = useCallback(() => {
     setDecisions(new Map());
@@ -59,5 +79,5 @@ export function useDecisions(total: number): UseDecisions {
     return { pending: total - approved - denied, approved, denied };
   }, [decisions, total]);
 
-  return { decisions, decide, reset, counts };
+  return { decisions, decide, undo, reset, counts };
 }

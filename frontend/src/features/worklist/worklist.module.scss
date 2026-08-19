@@ -1,0 +1,92 @@
+/** The chosen set, kept beside the review so decisions do not lose your place. */
+
+.rail {
+  flex: 0 0 260px;
+  background: #ffffff;
+  border: 1px solid #dfe1e2;
+  max-height: 74vh;
+  overflow-y: auto;
+}
+
+.railHeader {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  padding: 10px 12px;
+  border-bottom: 1px solid #dfe1e2;
+  z-index: 1;
+}
+
+.smallCaps {
+  display: block;
+  font-size: 0.75rem;
+  color: #71767a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+
+.kbd {
+  font-family: "Roboto Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  background: #f0f0f0;
+  border: 1px solid #dfe1e2;
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 0 4px;
+}
+
+.item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid #dfe1e2;
+  border-left: 4px solid transparent;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+
+  &:focus-visible {
+    outline: 0.25rem solid #2491ff;
+    outline-offset: -4px;
+  }
+}
+
+.current {
+  border-left-color: #005ea2;
+  background: #eff6fb;
+}
+
+.itemId {
+  display: block;
+  font-family: "Roboto Mono", ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+
+.badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border: 1px solid currentcolor;
+}
+
+.idle {
+  color: #71767a;
+}
+
+.flagged {
+  color: #b50909;
+}
+
+.clean {
+  color: #008817;
+}
+
+.decided {
+  color: #71767a;
+}

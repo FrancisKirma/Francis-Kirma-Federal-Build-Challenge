@@ -1,0 +1,111 @@
+/** Triage: the queue answers "what should I open?" before anything is opened. */
+
+.statStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: #dfe1e2;
+  border: 1px solid #dfe1e2;
+  margin-bottom: 20px;
+}
+
+.statCell {
+  background: #ffffff;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: #71767a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.statValue {
+  font-family: "Roboto Mono", ui-monospace, monospace;
+  font-size: 1.75rem;
+  line-height: 1.1;
+  color: #1b1b1b;
+}
+
+.alarm {
+  color: #b50909;
+}
+
+/* --- Signal -------------------------------------------------------------- */
+
+.pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border: 1px solid currentcolor;
+  white-space: nowrap;
+}
+
+.pillIdle {
+  color: #71767a;
+  border-style: dashed;
+  font-weight: 400;
+}
+
+.pillFlagged {
+  color: #b50909;
+  background: rgba(181, 9, 9, 0.06);
+}
+
+.pillClean {
+  color: #008817;
+  background: rgba(0, 136, 23, 0.06);
+}
+
+.signalFields {
+  display: block;
+  font-size: 0.75rem;
+  color: #71767a;
+  margin-top: 4px;
+}
+
+.flaggedRow {
+  background: rgba(181, 9, 9, 0.04);
+}
+
+.monoId {
+  font-family: "Roboto Mono", ui-monospace, monospace;
+  font-size: 0.93rem;
+  font-weight: 400;
+}
+
+/* --- Tabs ---------------------------------------------------------------- */
+
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #dfe1e2;
+  margin-bottom: 0;
+}
+
+.tab {
+  padding: 10px 16px;
+  margin-bottom: -2px;
+  font-size: 0.95rem;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: #71767a;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 0.25rem solid #2491ff;
+  }
+}
+
+.tabActive {
+  font-weight: 700;
+  color: #005ea2;
+  border-bottom-color: #005ea2;
+}
