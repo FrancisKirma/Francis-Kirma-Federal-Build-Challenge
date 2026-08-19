@@ -20,7 +20,7 @@ import {
 import { useApplications } from "./hooks/useApplications";
 import { useBatchVerification } from "./hooks/useBatchVerification";
 import { useDecisions } from "./hooks/useDecisions";
-import type { ApplicationSummary, DecisionStatus } from "./types";
+import type { ApplicationSummary, BatchOutcome, DecisionStatus } from "./types";
 import { useReviewKeys } from "./hooks/useReviewKeys";
 import { useToast } from "./hooks/useToast";
 import { useVerification } from "./hooks/useVerification";
@@ -48,6 +48,8 @@ export function App(): React.ReactElement {
   const [worklist, setWorklist] = useState<string[]>([]);
   /** The queue order at the moment a review was opened from it. */
   const [queueLane, setQueueLane] = useState<string[]>([]);
+  /** Application ids in triage order, settled once a run of checks finishes. */
+  const [triageOrder, setTriageOrder] = useState<string[]>([]);
 
   const visible = useMemo(() => {
     const inTab = applications.filter((application) => {
@@ -55,16 +57,18 @@ export function App(): React.ReactElement {
       if (tab === "pending") return decision === undefined;
       return decision?.status === tab;
     });
-    if (tab !== "pending") return inTab;
+    if (tab !== "pending" || triageOrder.length === 0) return inTab;
 
-    // What needs a decision first: disagreements, then unread, then clean.
-    const rank = (application: ApplicationSummary): number => {
-      const result = verification.resultFor(application.application_id);
-      if (result === null) return 1;
-      return result.flagged ? 0 : 2;
+    // Ordered by the last completed triage, not live. Re-ranking as each result
+    // arrives would shuffle rows under the agent while they are reading them,
+    // and would make Previous and Next point somewhere different from the list
+    // on screen.
+    const at = (id: string): number => {
+      const index = triageOrder.indexOf(id);
+      return index === -1 ? Number.MAX_SAFE_INTEGER : index;
     };
-    return [...inTab].sort((a, b) => rank(a) - rank(b));
-  }, [applications, decisions, tab, verification]);
+    return [...inTab].sort((a, b) => at(a.application_id) - at(b.application_id));
+  }, [applications, decisions, tab, triageOrder]);
 
   const uncheckedPending = visible.filter(
     (a) => verification.resultFor(a.application_id) === null,
@@ -84,7 +88,7 @@ export function App(): React.ReactElement {
       setActiveId(id);
       setReturnTo(from);
       setView("review");
-      // Take the order as the agent saw it, not as it will be after checking.
+      // The list as the agent sees it, so stepping matches the rows on screen.
       if (from === "queue") {
         setQueueLane(visible.map((a) => a.application_id));
       }
@@ -92,10 +96,15 @@ export function App(): React.ReactElement {
     [visible],
   );
 
-  // Frozen when the review opens. The queue re-sorts as results arrive -- a
-  // clean label drops below the flagged ones -- so a live lane would reorder
-  // under the agent and send Next somewhere they did not expect.
-  const laneIds = returnTo === "batch" && worklist.length > 0 ? worklist : queueLane;
+  // The queue order only changes when a run of checks settles, so the lane can
+  // follow what is on screen: Previous and Next always mean the row above and
+  // the row below.
+  const laneIds =
+    returnTo === "batch" && worklist.length > 0
+      ? worklist
+      : queueLane.length > 0
+        ? queueLane
+        : visible.map((a) => a.application_id);
   const laneItems = laneIds
     .map((id) => applications.find((a) => a.application_id === id))
     .filter((a): a is ApplicationSummary => a !== undefined);
@@ -160,9 +169,43 @@ export function App(): React.ReactElement {
     setSelected(new Set());
     setWorklist([]);
     setQueueLane([]);
+    setTriageOrder([]);
     setTab("pending");
     dismissToast();
   }, [dismissToast, reset, verification]);
+
+  /**
+   * Fix the queue order once a run of checks has finished.
+   *
+   * Sorting live would move rows while the agent reads them; sorting once at
+   * the end puts what needs attention first and then holds still.
+   */
+  const settleTriageOrder = useCallback(
+    (outcomes: BatchOutcome[]) => {
+      // Ranked from the run's own outcomes rather than the results store: the
+      // store read here would come from the render that started the run, when
+      // nothing had been read yet.
+      const flagged = new Set(
+        outcomes
+          .filter((outcome) => outcome.result?.flagged === true)
+          .map((outcome) => outcome.application_id),
+      );
+      const unread = new Set(
+        outcomes
+          .filter((outcome) => outcome.result === null)
+          .map((outcome) => outcome.application_id),
+      );
+      const rank = (id: string): number =>
+        flagged.has(id) ? 0 : unread.has(id) ? 1 : 2;
+
+      setTriageOrder(
+        [...applications]
+          .map((a) => a.application_id)
+          .sort((a, b) => rank(a) - rank(b)),
+      );
+    },
+    [applications],
+  );
 
   const handleDecide = useCallback(
     (status: DecisionStatus) => {
@@ -234,7 +277,9 @@ export function App(): React.ReactElement {
                   type="button"
                   disabled={uncheckedPending.length === 0}
                   onClick={() => {
-                    void batch.run(uncheckedPending, verification.remember);
+                    void batch
+                      .run(uncheckedPending, verification.remember)
+                      .then(settleTriageOrder);
                   }}
                 >
                   {uncheckedPending.length === 0
@@ -443,9 +488,13 @@ export function App(): React.ReactElement {
         toast={toast}
         onUndo={() => {
           if (toast === null) return;
+          // Undo returns the application to how it was before the agent
+          // touched it: not decided, and not checked either. Leaving the
+          // reading behind would show a label the agent never chose to read.
           undo(toast.applicationId);
+          verification.forget(toast.applicationId);
           dismissToast();
-          openReview(toast.applicationId, returnTo);
+          setView("queue");
         }}
         onDismiss={dismissToast}
       />

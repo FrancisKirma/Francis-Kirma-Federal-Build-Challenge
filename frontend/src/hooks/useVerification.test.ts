@@ -100,6 +100,30 @@ describe("useVerification", () => {
     expect(hook.current.errorFor("TTB-2024-0042")).toBeNull();
   });
 
+  it("forgets one application's reading without touching the others", async () => {
+    vi.spyOn(api, "verifyApplication").mockImplementation((id: string) =>
+      Promise.resolve(response(id)),
+    );
+    const { result: hook } = renderHook(() => useVerification());
+
+    act(() => {
+      hook.current.verify("TTB-2024-0041");
+      hook.current.verify("TTB-2024-0042");
+    });
+    await waitFor(() => {
+      expect(hook.current.resultFor("TTB-2024-0042")).not.toBeNull();
+    });
+
+    act(() => {
+      hook.current.forget("TTB-2024-0041");
+    });
+
+    // Undoing a decision returns that application to untouched, and only that
+    // one: the rest of the agent's work stays where it was.
+    expect(hook.current.resultFor("TTB-2024-0041")).toBeNull();
+    expect(hook.current.resultFor("TTB-2024-0042")).not.toBeNull();
+  });
+
   it("forgets every reading when the session is cleared", async () => {
     vi.spyOn(api, "verifyApplication").mockResolvedValue(response("TTB-2024-0041"));
     const { result: hook } = renderHook(() => useVerification());

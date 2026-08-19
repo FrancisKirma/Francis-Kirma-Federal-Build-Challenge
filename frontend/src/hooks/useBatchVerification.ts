@@ -17,11 +17,12 @@ const CONCURRENCY = 4;
 
 interface UseBatchVerification {
   outcomes: BatchOutcome[];
+  /** Resolves with what the run produced, so a caller can order by it. */
   run: (
     applications: ApplicationSummary[],
     /** Hands each result to the shared store so opening a row reuses it. */
     remember: (id: string, result: VerificationResponse) => void,
-  ) => Promise<void>;
+  ) => Promise<BatchOutcome[]>;
 }
 
 export function useBatchVerification(): UseBatchVerification {
@@ -52,17 +53,28 @@ export function useBatchVerification(): UseBatchVerification {
         })),
       );
 
+      const settled = new Map<string, BatchOutcome>();
       const queue = [...applications];
       const worker = async (): Promise<void> => {
         for (;;) {
           const next = queue.shift();
           if (next === undefined) return;
+          const base: BatchOutcome = {
+            application_id: next.application_id,
+            applicant: next.applicant,
+            result: null,
+            error: null,
+            pending: false,
+          };
           try {
             const verified = await verifyApplication(next.application_id);
             remember(next.application_id, verified);
             settle(next.application_id, { result: verified });
+            settled.set(next.application_id, { ...base, result: verified });
           } catch (cause: unknown) {
-            settle(next.application_id, { error: messageFor(cause) });
+            const message = messageFor(cause);
+            settle(next.application_id, { error: message });
+            settled.set(next.application_id, { ...base, error: message });
           }
         }
       };
@@ -70,6 +82,9 @@ export function useBatchVerification(): UseBatchVerification {
       await Promise.all(
         Array.from({ length: Math.min(CONCURRENCY, applications.length) }, worker),
       );
+      return applications
+        .map((application) => settled.get(application.application_id))
+        .filter((outcome): outcome is BatchOutcome => outcome !== undefined);
     },
     [settle],
   );
