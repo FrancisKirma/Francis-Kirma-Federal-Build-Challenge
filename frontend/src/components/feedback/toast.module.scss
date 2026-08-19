@@ -1,0 +1,53 @@
+/**
+ * Pinned to the bottom of the viewport so a confirmation is visible wherever the
+ * agent is on the page, without displacing the content they are reading.
+ */
+.region {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  width: min(34rem, calc(100vw - 2rem));
+  /* Empty region must not intercept clicks on the page behind it. */
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.25);
+  animation: toastIn 180ms ease-out;
+
+  /* Opaque per tone: the alert's tint is translucent, and page content showing
+     through a confirmation makes it harder to read than the page behind it.
+     USWDS success and info background tokens. */
+  :global(.usa-alert--success) {
+    background-color: #ecf3ec;
+  }
+
+  :global(.usa-alert--info) {
+    background-color: #e7f6f8;
+  }
+}
+
+.dismiss {
+  margin-left: 1rem;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The message carries the meaning; the movement is decoration. */
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

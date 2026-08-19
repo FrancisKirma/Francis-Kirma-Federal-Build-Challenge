@@ -20,6 +20,20 @@ describe("AppShell", () => {
     expect(container.querySelector("#main-content")).not.toBeNull();
   });
 
+  it("says plainly that this is not a real government system", () => {
+    render(<AppShell>content</AppShell>);
+    expect(screen.getByText(/Demonstration only/i)).toBeInTheDocument();
+    expect(screen.getByText(/Not an official TTB system/i)).toBeInTheDocument();
+  });
+
+  it("puts the demo notice before the official-website banner", () => {
+    const { container } = render(<AppShell>content</AppShell>);
+    const text = container.textContent;
+    expect(text.indexOf("Demonstration only")).toBeLessThan(
+      text.indexOf("An official website"),
+    );
+  });
+
   it("warns that the first check is slower, before anyone waits on it", () => {
     render(<AppShell>content</AppShell>);
     expect(screen.getByText(/first label you check may take a few seconds/i))

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Button } from "@trussworks/react-uswds";
 
 import { StatusAlert } from "./components/feedback/StatusAlert";
+import { Toast } from "./components/feedback/Toast";
 import { AppShell } from "./components/layout/AppShell";
 import { BatchResults } from "./features/batch/BatchResults";
 import { Queue } from "./features/queue/Queue";
@@ -11,6 +12,7 @@ import { Upload } from "./features/upload/Upload";
 import { useApplications } from "./hooks/useApplications";
 import { useBatchVerification } from "./hooks/useBatchVerification";
 import { useDecisions } from "./hooks/useDecisions";
+import { useToast } from "./hooks/useToast";
 import { useVerification } from "./hooks/useVerification";
 
 type View = "queue" | "review" | "batch" | "upload";
@@ -20,6 +22,7 @@ export function App(): React.ReactElement {
   const verification = useVerification();
   const batch = useBatchVerification();
   const { decisions, decide, reset, counts } = useDecisions(applications.length);
+  const { toast, show: showToast, dismiss: dismissToast } = useToast();
 
   const [view, setView] = useState<View>("queue");
   // Where a review was opened from, so deciding returns there. A batch is a
@@ -110,7 +113,14 @@ export function App(): React.ReactElement {
                 type="button"
                 unstyled
                 className="margin-left-3"
-                onClick={reset}
+                onClick={() => {
+                  const cleared = counts.approved + counts.denied;
+                  reset();
+                  showToast(
+                    `Cleared ${String(cleared)} decision${cleared === 1 ? "" : "s"}.`,
+                    "info",
+                  );
+                }}
               >
                 Clear all decisions
               </Button>
@@ -130,6 +140,12 @@ export function App(): React.ReactElement {
             const current = verification.resultFor(active.application_id);
             if (current === null) return;
             decide(active.application_id, status, current);
+            showToast(
+              `${active.application_id} marked ${
+                status === "approved" ? "approved" : "rejected"
+              }.`,
+              status === "approved" ? "success" : "info",
+            );
             if (returnTo === "queue") setSelected(new Set());
             setView(returnTo);
           }}
@@ -161,6 +177,7 @@ export function App(): React.ReactElement {
           onVerify={verification.upload}
         />
       )}
+      <Toast toast={toast} onDismiss={dismissToast} />
     </AppShell>
   );
 }
