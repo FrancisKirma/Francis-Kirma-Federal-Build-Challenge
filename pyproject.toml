@@ -11,6 +11,15 @@ dependencies = [
     "python-multipart>=0.0.32",
 ]
 
+[tool.vercel]
+# app.py puts backend/ on the import path first; backend.main cannot be imported
+# directly from the repository root because its modules import as top-level names.
+entrypoint = "app:app"
+
+[tool.vercel.scripts]
+# Runs after Python dependencies install and before the function is bundled.
+build = "python build.py"
+
 [dependency-groups]
 dev = [
     "pytest>=8.3",
@@ -53,8 +62,10 @@ ignore = ["D203", "D213", "CPY001", "COM812", "ISC001"]
     "S101", "D103", "PLR2004", "INP001", "FBT003", "RUF001", "ANN202",
     "ARG001", "ARG002", "D102", "D107",
 ]
-# Dev script: prints to the terminal by design, not a library.
+# Dev and build scripts print to the terminal by design; that output is how a
+# hand-run tool and a deploy log report progress.
 "tools/**" = ["T201", "INP001"]
+"build.py" = ["T201", "INP001"]
 # Module self-checks assert deliberately; they are the runnable check for logic
 # that has no separate test module.
 # backend/ is a sys.path root, not a package: an __init__.py there collides with
