@@ -286,3 +286,46 @@
 .shortcutHint {
   white-space: nowrap;
 }
+
+/* --- Loading ------------------------------------------------------------- */
+
+/**
+ * A placeholder where the answer will appear, rather than a spinner elsewhere.
+ *
+ * The row keeps its shape while the model reads, so nothing jumps when the
+ * value arrives, and the wait is visible in the place the agent is looking.
+ */
+.skeleton {
+  display: block;
+  padding: 0.15rem 0;
+}
+
+.skeletonPill {
+  width: 7rem;
+}
+
+.skeletonBar {
+  display: block;
+  height: 0.95rem;
+  border-radius: 0.125rem;
+  background: linear-gradient(90deg, #dfe1e2 25%, #f0f0f0 50%, #dfe1e2 75%);
+  background-size: 200% 100%;
+  animation: evidenceShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes evidenceShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* The label carries the meaning; the movement is decoration. */
+@media (prefers-reduced-motion: reduce) {
+  .skeletonBar {
+    animation: none;
+    background: #dfe1e2;
+  }
+}

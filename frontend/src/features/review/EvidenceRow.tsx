@@ -56,11 +56,8 @@ export function EvidenceRow({
   const status = result?.status;
   const note = result ? explain(result) : null;
 
-  const labelValue = busy
-    ? "Reading…"
-    : result === undefined
-      ? "Not checked yet"
-      : (result.extracted ?? "Not found on the label");
+  const labelValue =
+    result === undefined ? "Not checked yet" : (result.extracted ?? "Not found on the label");
 
   return (
     <button
@@ -74,14 +71,20 @@ export function EvidenceRow({
     >
       <span className={styles.evidenceTop}>
         <span className="font-body-sm text-bold">{FIELD_LABELS[field] ?? field}</span>
-        <span
-          className={[
-            styles.pill,
-            status === undefined ? styles.pillUnchecked : styles[status],
-          ].join(" ")}
-        >
-          {status === undefined ? "Not checked" : STATUS_TEXT[status]}
-        </span>
+        {busy ? (
+          <span className={cx(styles.skeleton, styles.skeletonPill)} aria-hidden="true">
+            <span className={styles.skeletonBar} />
+          </span>
+        ) : (
+          <span
+            className={cx(
+              styles.pill,
+              status === undefined ? styles.pillUnchecked : styles[status],
+            )}
+          >
+            {status === undefined ? "Not checked" : STATUS_TEXT[status]}
+          </span>
+        )}
       </span>
 
       <span className={styles.valueGrid}>
@@ -90,11 +93,15 @@ export function EvidenceRow({
         </span>
         <span className={styles.mono}>{claimed}</span>
         <span className="font-body-3xs text-base-dark">Label</span>
-        <span
-          className={cx(styles.mono, result?.extracted ? "" : styles.muted)}
-        >
-          {labelValue}
-        </span>
+        {busy ? (
+          <span className={styles.skeleton} aria-label="Reading the label">
+            <span className={styles.skeletonBar} />
+          </span>
+        ) : (
+          <span className={cx(styles.mono, result?.extracted ? "" : styles.muted)}>
+            {labelValue}
+          </span>
+        )}
       </span>
 
       {note !== null && <span className={styles.note}>{note}</span>}

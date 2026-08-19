@@ -5,6 +5,7 @@ import type {
   Decision,
   VerificationResponse,
 } from "../../types";
+import { cx } from "../../styles/classNames";
 import styles from "./queue.module.scss";
 import { SignalPill } from "./SignalPill";
 import type { QueueTab } from "./QueueTabs";
@@ -38,6 +39,18 @@ function timeOf(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+/**
+ * MM/DD/YYYY, the convention on the federal forms these applications come from.
+ *
+ * Built from the parts rather than parsed as a date: `new Date("2024-03-11")`
+ * is UTC midnight, which renders as the previous day west of Greenwich.
+ */
+function filedOn(submitted: string): string {
+  const [year, month, day] = submitted.split("-");
+  if (year === undefined || month === undefined || day === undefined) return submitted;
+  return `${month}/${day}/${year}`;
+}
+
 export function Queue({
   applications,
   decisions,
@@ -61,7 +74,7 @@ export function Queue({
       <thead>
         <tr>
           {isPending && (
-            <th scope="col">
+            <th scope="col" className={styles.selectCell}>
               <Checkbox
                 id="select-all"
                 name="select-all"
@@ -71,11 +84,15 @@ export function Queue({
               />
             </th>
           )}
-          <th scope="col">Application</th>
+          <th scope="col" className={styles.applicationCell}>
+            Application
+          </th>
           <th scope="col">Company</th>
           <th scope="col">Brand on the form</th>
           {isPending && <th scope="col">Signal</th>}
-          <th scope="col">{isPending ? "Received" : "Decided"}</th>
+          <th scope="col" className={styles.dateCell}>
+            {isPending ? "Received" : "Decided"}
+          </th>
           <th scope="col">
             <span className="usa-sr-only">Actions</span>
           </th>
@@ -91,7 +108,7 @@ export function Queue({
           return (
             <tr key={id} className={flagged && isPending ? styles.flaggedRow : ""}>
               {isPending && (
-                <td>
+                <td className={styles.selectCell}>
                   <Checkbox
                     id={`select-${id}`}
                     name={`select-${id}`}
@@ -103,7 +120,7 @@ export function Queue({
                   />
                 </td>
               )}
-              <th scope="row" className={styles.monoId}>
+              <th scope="row" className={cx(styles.monoId, styles.applicationCell)}>
                 {id}
               </th>
               <td>{application.applicant}</td>
@@ -113,9 +130,9 @@ export function Queue({
                   <SignalPill result={result} busy={isBusy(id)} />
                 </td>
               )}
-              <td className="font-body-sm text-base-dark">
+              <td className={cx("font-body-sm text-base-dark", styles.dateCell)}>
                 {isPending || decision === undefined
-                  ? application.submitted_date
+                  ? filedOn(application.submitted_date)
                   : `${decision.status === "approved" ? "Approved" : "Rejected"} · ${timeOf(
                       decision.decidedAt,
                     )}${decision.reason === null ? "" : ` · ${decision.reason}`}`}

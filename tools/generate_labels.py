@@ -135,6 +135,28 @@ BLUR: Final = """
 """
 
 
+# TTB-2024-0050: a photograph that failed. Heavy blur, near-darkness and a
+# blown-out reflection across the panel, so no field can be read at all -- the
+# case where the tool must return null everywhere rather than guess, and the
+# agent has to ask for a resubmission.
+UNREADABLE: Final = """
+  body { background: #0a0a0a; }
+  .label {
+    filter: blur(11px) brightness(.34) contrast(.55) saturate(.6);
+    transform: perspective(900px) rotateY(19deg) rotateZ(-4deg) scale(.82);
+  }
+  .label::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 70% 46% at 44% 42%,
+        rgba(255,255,255,.62) 0%, rgba(255,255,255,.30) 52%, transparent 82%),
+      linear-gradient(160deg, rgba(0,0,0,.55) 0%, transparent 40%,
+        rgba(0,0,0,.72) 100%);
+  }
+  .label { position: relative; }
+"""
+
+
 def find_chrome() -> str:
     """Locate a Chrome binary. CHROME overrides for non-macOS checkouts."""
     override = os.environ.get("CHROME")
@@ -206,6 +228,8 @@ def render_html(record: dict[str, Any]) -> str:
         page = page.replace("</style>", DISTORTION + "</style>")
     elif post == "out_of_focus":
         page = page.replace("</style>", BLUR + "</style>")
+    elif post == "unreadable":
+        page = page.replace("</style>", UNREADABLE + "</style>")
 
     if "{{" in page:
         leftover = page[page.index("{{"): page.index("{{") + 40]

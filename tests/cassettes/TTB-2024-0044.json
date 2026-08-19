@@ -2,7 +2,7 @@
   "application_id": "TTB-2024-0044",
   "provider": "openai",
   "model": "gpt-4.1-mini",
-  "elapsed_seconds": 2.539,
+  "elapsed_seconds": 2.84,
   "response": {
     "brand_name": "HARBOR LIGHT",
     "class_type": "Blended Whiskey",

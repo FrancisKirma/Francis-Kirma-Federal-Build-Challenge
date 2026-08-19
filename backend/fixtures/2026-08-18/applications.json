@@ -296,5 +296,38 @@
         "why_it_matters": "Both are recall rather than reading. A hallucinated value that happens to look plausible is the failure this tool exists to make visible, which is why the agent always sees the artwork beside the reading."
       }
     }
+  },
+  {
+    "application_id": "TTB-2024-0050",
+    "applicant": "Rainshadow Spirits LLC",
+    "submitted_date": "2024-03-15",
+    "beverage_type": "distilled_spirits",
+    "artwork": "labels/ttb-2024-0050.png",
+    "submitted": {
+      "brand_name": "RAINSHADOW",
+      "class_type": "Straight Rye Whiskey",
+      "alcohol_content": "45% Alc./Vol. (90 Proof)",
+      "net_contents": "750 mL",
+      "government_warning": true
+    },
+    "_label_truth": {
+      "note": "What gets printed on the artwork. Never served to the client; the service must read this off the image, not be told it.",
+      "condition": "The photograph failed: out of focus, underexposed, and washed out by a reflection. Nothing on the panel can be read.",
+      "style": "sans-slate",
+      "post_process": "unreadable",
+      "printed": {
+        "brand_name": "RAINSHADOW",
+        "class_type": "Straight Rye Whiskey",
+        "alcohol_content": "45% Alc./Vol. (90 Proof)",
+        "net_contents": "750 mL",
+        "government_warning": "STATUTORY"
+      },
+      "expected_status": null,
+      "note_on_expectations": "No expected_status: what a model returns from an unreadable image is not derivable from the printed values. Observed behaviour is recorded in degraded_reading instead, and this record is excluded from the known-answer check.",
+      "degraded_reading": {
+        "observed": "gpt-4.1-mini returns null for all five fields, consistently. Contrast TTB-2024-0049, where a milder blur left the model confident enough to invent a value.",
+        "why_it_matters": "The tool must return null rather than guess when a panel cannot be read. An agent seeing every field unreadable knows to ask for a resubmission, which is a different action from seeing a disagreement."
+      }
+    }
   }
 ]

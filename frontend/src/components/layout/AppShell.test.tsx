@@ -25,12 +25,17 @@ describe("AppShell", () => {
     expect(screen.getByText(/Demo only — not a government site/i)).toBeInTheDocument();
   });
 
-  it("keeps the demo pill inside the official-website statement", () => {
+  it("makes no official-website claim, which a prototype cannot", () => {
     const { container } = render(<AppShell>content</AppShell>);
-    const banner = container.querySelector(".usa-banner");
+    expect(container.querySelector(".usa-banner")).toBeNull();
+    expect(screen.queryByText(/An official website/i)).not.toBeInTheDocument();
+  });
+
+  it("puts the demo marking beside the tool's name", () => {
+    render(<AppShell>content</AppShell>);
+    const heading = screen.getByRole("heading", { level: 1 });
     const pill = screen.getByText(/Demo only/i);
-    // The qualification must be read with the claim, not somewhere else.
-    expect(banner?.parentElement?.contains(pill)).toBe(true);
+    expect(heading.parentElement?.contains(pill)).toBe(true);
   });
 
   it("marks the sample data as a prototype in the header", () => {

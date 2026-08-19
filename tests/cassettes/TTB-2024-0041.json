@@ -2,7 +2,7 @@
   "application_id": "TTB-2024-0041",
   "provider": "openai",
   "model": "gpt-4.1-mini",
-  "elapsed_seconds": 3.092,
+  "elapsed_seconds": 2.261,
   "response": {
     "brand_name": "OLD TOM DISTILLERY",
     "class_type": "Kentucky Straight Bourbon Whiskey",

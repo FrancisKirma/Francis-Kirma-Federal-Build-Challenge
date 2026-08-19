@@ -118,6 +118,32 @@ describe("Queue triage", () => {
     expect(props.onReview).toHaveBeenCalledWith("TTB-2024-0041");
   });
 
+  it("shows the filing date in the format the forms use", () => {
+    setup();
+    // 2024-03-11 as the applicant would read it, not as the API stores it.
+    expect(screen.getAllByText("03/11/2024")).toHaveLength(2);
+    expect(screen.queryByText("2024-03-11")).not.toBeInTheDocument();
+  });
+
+  it("leaves an unparseable date alone rather than inventing one", () => {
+    render(
+      <Queue
+        applications={[
+          { ...application("TTB-2024-0041", "Old Tom"), submitted_date: "unknown" },
+        ]}
+        decisions={new Map()}
+        resultFor={() => null}
+        isBusy={() => false}
+        tab="pending"
+        selected={new Set()}
+        onToggle={vi.fn()}
+        onToggleAll={vi.fn()}
+        onReview={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("unknown")).toBeInTheDocument();
+  });
+
   it("labels every checkbox for screen readers", () => {
     setup();
     expect(

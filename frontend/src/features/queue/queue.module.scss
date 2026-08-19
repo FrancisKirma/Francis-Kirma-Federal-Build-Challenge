@@ -109,3 +109,33 @@
   color: #005ea2;
   border-bottom-color: #005ea2;
 }
+
+/* --- Column sizing ------------------------------------------------------- */
+
+/* The checkbox sits alone in its cell, so it is centred on the row rather than
+   hanging from the top of it. */
+.selectCell {
+  width: 3.5rem;
+  text-align: center;
+  vertical-align: middle;
+
+  :global(.usa-checkbox) {
+    background: transparent;
+  }
+
+  :global(.usa-checkbox__label) {
+    margin: 0;
+    display: inline-flex;
+  }
+}
+
+/* Wide enough that an application id never wraps mid-number. */
+.applicationCell {
+  width: 11rem;
+  white-space: nowrap;
+}
+
+/* Wide enough for MM/DD/YYYY, or a decision line carrying a time and reason. */
+.dateCell {
+  width: 12rem;
+}

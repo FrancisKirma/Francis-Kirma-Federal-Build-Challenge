@@ -1,26 +1,17 @@
 /**
- * The demo pill rides inside the official-website banner.
- *
- * The banner is a federal standard and is not ours to reword, so the
- * qualification is placed within the same visual statement instead: a reader
- * cannot take in "An official website of the United States government" without
- * also taking in that this is not one.
+ * This carries no USWDS official-website banner: the tool is a prototype and
+ * cannot make that claim. The pill sits beside the title instead, so what the
+ * page is is stated where its name is.
  */
-.bannerRow {
-  position: relative;
+.titleRow {
   display: flex;
   align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
-  background: #f0f0f0;
-
-  > :first-child {
-    flex: 1 1 auto;
-  }
 }
 
 .demoPill {
   padding: 2px 8px;
-  margin-right: 1rem;
   background: #ffbe2e;
   color: #1b1b1b;
   font-size: 0.72rem;

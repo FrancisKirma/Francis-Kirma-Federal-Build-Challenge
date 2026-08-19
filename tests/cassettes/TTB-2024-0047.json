@@ -2,7 +2,7 @@
   "application_id": "TTB-2024-0047",
   "provider": "openai",
   "model": "gpt-4.1-mini",
-  "elapsed_seconds": 2.765,
+  "elapsed_seconds": 2.543,
   "response": {
     "brand_name": "JUNIPER BEND",
     "class_type": "London Dry Gin",

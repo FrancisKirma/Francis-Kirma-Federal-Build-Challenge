@@ -1,0 +1,13 @@
+{
+  "application_id": "TTB-2024-0050",
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "elapsed_seconds": 1.888,
+  "response": {
+    "brand_name": null,
+    "class_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "government_warning": null
+  }
+}

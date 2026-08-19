@@ -2,7 +2,7 @@
   "application_id": "TTB-2024-0046",
   "provider": "openai",
   "model": "gpt-4.1-mini",
-  "elapsed_seconds": 2.97,
+  "elapsed_seconds": 3.081,
   "response": {
     "brand_name": "RIDGEWAY BROTHERS",
     "class_type": "Kentucky Bourbon",

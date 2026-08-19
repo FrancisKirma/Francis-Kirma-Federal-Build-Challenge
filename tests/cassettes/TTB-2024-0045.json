@@ -2,7 +2,7 @@
   "application_id": "TTB-2024-0045",
   "provider": "openai",
   "model": "gpt-4.1-mini",
-  "elapsed_seconds": 2.45,
+  "elapsed_seconds": 2.317,
   "response": {
     "brand_name": "MAISON DUVAL",
     "class_type": "Cognac",

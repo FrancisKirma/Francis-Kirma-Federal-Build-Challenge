@@ -35,9 +35,16 @@ describe("EvidenceRow", () => {
     expect(screen.getByText("Not checked yet")).toBeInTheDocument();
   });
 
-  it("says a check is running rather than showing an empty value", () => {
+  it("shows a placeholder where the answer will appear while it is read", () => {
     setup(undefined, { busy: true });
-    expect(screen.getByText("Reading…")).toBeInTheDocument();
+    // The row keeps its shape, so nothing jumps when the value arrives.
+    expect(screen.getByLabelText("Reading the label")).toBeInTheDocument();
+    expect(screen.queryByText("Not checked yet")).not.toBeInTheDocument();
+  });
+
+  it("keeps the form value visible while the label is being read", () => {
+    setup(undefined, { busy: true });
+    expect(screen.getByText("45% Alc./Vol. (90 Proof)")).toBeInTheDocument();
   });
 
   it("states the status in words, not colour alone", () => {
