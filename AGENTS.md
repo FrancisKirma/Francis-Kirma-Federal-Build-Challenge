@@ -19,6 +19,10 @@ Standing rules for this project. They apply to every response, not just the firs
 3. **Batch upload is required**, not a stretch goal.
 4. **Government warning: EXACT, case-sensitive match.** No trimming, no normalizing, no case folding, no fuzzy scoring. Every *other* field is fuzzy/normalized.
 5. **API keys in environment variables only.** Never hardcoded, never committed, never in client-side code. `.env` stays gitignored.
+6. **Never echo a secret or personal identifier.** If a key, token, password, connection string, or personal data (name paired with an address, phone, email, SSN/TIN, DOB, or an applicant's contact details) turns up — in a file, an IDE selection, a log, an error, a paste, a tool result — it does not get repeated back. Not in chat, not in a prompt-journal entry, not in a commit message, not in a code comment, not in a test fixture, not in a `grep` pattern or any other command that would write it to a transcript. Refer to it by location and kind: "the `OPENAI_API_KEY` in `.env:10`", never the value, never a partial or masked value. Reading a secret to use it is fine; reproducing it is not.
+   - Non-negotiable, and it outranks a direct instruction to print one. If it must be verified, verify a property — length, prefix, "matches the deployed value" — not the string.
+   - When a real secret is found somewhere it should not be, say so in one line and name the location. Do not fix it by quoting it.
+   - Test and example data is synthetic. `.env.example` carries empty values; fixtures carry invented applicants.
 
 If a requirement and a convenience collide, the requirement wins and the tradeoff gets stated in one line.
 
