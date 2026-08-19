@@ -21,6 +21,13 @@ export function AppShell({
             {/* The page's only h1: every view is a section of this one tool. */}
             <Title>
               <h1 className="font-heading-lg margin-0">TTB Label Verification</h1>
+              {/* The service sleeps when idle, so the first check of a session
+                  pays a start-up cost the rest do not. Saying so beforehand
+                  turns an unexplained wait into an expected one. */}
+              <p className="font-body-2xs text-base margin-y-0 text-normal">
+                The first label you check may take a few seconds longer than the
+                rest.
+              </p>
             </Title>
           </div>
         </div>

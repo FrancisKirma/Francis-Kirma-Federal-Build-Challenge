@@ -25,10 +25,14 @@ from pydantic import ValidationError
 
 DEFAULT_MODEL: Final = "gpt-4.1-mini"
 
-# Total wall-clock budget for one label. The product requirement is under five
-# seconds end to end, so the provider call is cut off short of it to leave room
-# for preprocessing, validation, and the response trip.
-TIMEOUT_SECONDS: Final = 4.5
+# Total wall-clock budget for one provider call.
+#
+# The product requirement is a result in under five seconds. Measured on the
+# deployment: a warm call takes ~2.4s, but the first call after the function
+# goes cold adds 1.5-2s of start-up and was exceeding a 4.5s budget, failing the
+# very first review of a session with a 502. The budget covers a cold call, and
+# the service layer retries a failure once when there is time to spend on it.
+TIMEOUT_SECONDS: Final = 8.0
 
 # Measured, not guessed: downscaling these labels to a 512px edge makes the 11px
 # warning text unreadable and the model correctly returns null for it, which

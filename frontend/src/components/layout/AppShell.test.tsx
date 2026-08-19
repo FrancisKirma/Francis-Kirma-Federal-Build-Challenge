@@ -20,6 +20,12 @@ describe("AppShell", () => {
     expect(container.querySelector("#main-content")).not.toBeNull();
   });
 
+  it("warns that the first check is slower, before anyone waits on it", () => {
+    render(<AppShell>content</AppShell>);
+    expect(screen.getByText(/first label you check may take a few seconds/i))
+      .toBeInTheDocument();
+  });
+
   it("puts the work in a main landmark", () => {
     render(<AppShell>content</AppShell>);
     expect(screen.getByRole("main")).toHaveTextContent("content");

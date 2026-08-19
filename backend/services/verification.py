@@ -17,9 +17,10 @@ from services.extraction import TIMEOUT_SECONDS, ExtractionError, extract
 
 # One retry, and only when there is time to spend on it. A transient network
 # stall is common enough to be worth absorbing -- one was observed while
-# recording cassettes -- but a second full attempt must not push a single label
-# past the five-second budget.
-RETRY_IF_ELAPSED_UNDER: Final = 2.0
+# recording cassettes -- but a second attempt on an already-slow call would push
+# the agent well past a reasonable wait, so it only happens when the first
+# attempt failed quickly.
+RETRY_IF_ELAPSED_UNDER: Final = 2.5
 
 # Bounded so a large selection cannot open an unbounded number of provider
 # connections. Batch total time is not the per-label budget; that is stated in

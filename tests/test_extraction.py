@@ -145,8 +145,14 @@ def test_recorded_latency_within_budget(application_id: str) -> None:
     assert _cassette(application_id)["elapsed_seconds"] < BUDGET_SECONDS
 
 
-def test_provider_timeout_leaves_headroom() -> None:
-    assert TIMEOUT_SECONDS < BUDGET_SECONDS
+def test_provider_timeout_covers_a_cold_start() -> None:
+    """The budget must survive the first call after the function goes cold.
+
+    A warm call takes ~2.4s on the deployment and a cold one 1.5-2s more. A
+    timeout tuned to warm calls fails the first review of every session, which
+    is the worst one to fail.
+    """
+    assert TIMEOUT_SECONDS >= BUDGET_SECONDS + 2.5
 
 
 # --- Image preprocessing (a trust boundary) --------------------------------
