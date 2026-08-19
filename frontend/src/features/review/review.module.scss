@@ -46,6 +46,11 @@
   margin-left: auto;
 }
 
+.stepButtons {
+  display: flex;
+  gap: 8px;
+}
+
 .kbd {
   font-family: "Roboto Mono", ui-monospace, monospace;
   font-size: 0.75rem;

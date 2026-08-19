@@ -35,7 +35,14 @@ def _records() -> list[dict[str, Any]]:
 
 @pytest.mark.parametrize("record", _records(), ids=lambda r: r["application_id"])
 def test_fixture_expectations(record: dict[str, Any]) -> None:
-    """Perfect extraction of each label must yield its declared expected_status."""
+    """Perfect extraction of each label must yield its declared expected_status.
+
+    Records with a deliberately degraded image declare no expectation: what a
+    model returns from an unreadable panel is not derivable from the values the
+    panel carries.
+    """
+    if record["_label_truth"]["expected_status"] is None:
+        pytest.skip("image is degraded; no known answer to compare against")
     printed = dict(record["_label_truth"]["printed"])
     # The fixture stores a variant name; extraction would return the text itself.
     printed["government_warning"] = WARNING_VARIANTS[printed["government_warning"]]
@@ -48,7 +55,10 @@ def test_fixture_expectations(record: dict[str, Any]) -> None:
 def test_fixture_set_exercises_every_status() -> None:
     """A table that is all green would pass while testing nothing."""
     statuses = {
-        s for r in _records() for s in r["_label_truth"]["expected_status"].values()
+        s
+        for r in _records()
+        if r["_label_truth"]["expected_status"] is not None
+        for s in r["_label_truth"]["expected_status"].values()
     }
     assert statuses == {"match", "mismatch", "unreadable"}
 

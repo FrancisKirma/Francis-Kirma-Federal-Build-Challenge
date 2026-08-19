@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button, ButtonGroup } from "@trussworks/react-uswds";
 
 import { StatusAlert } from "../../components/feedback/StatusAlert";
+import { STATUTORY_WARNING } from "../../constants";
 import { FIELD_ORDER, FIELD_LABELS } from "../../types";
 import type {
   ApplicationSummary,
@@ -24,6 +25,9 @@ interface ReviewProps {
   /** Where the agent came from, and their place in it. */
   listName: string;
   position: { index: number; total: number } | null;
+  /** Move through the list without returning to it; null at either end. */
+  onPrevious: (() => void) | null;
+  onNext: (() => void) | null;
   onVerify: () => void;
   onBack: () => void;
   onDecide: (status: DecisionStatus) => void;
@@ -31,7 +35,11 @@ interface ReviewProps {
 
 function claimedText(field: string, application: ApplicationSummary): string {
   if (field === "government_warning") {
-    return application.submitted.government_warning ? "Stated as present" : "Not stated";
+    // The form only attests presence; what the label is measured against is the
+    // statute, so that is what the row shows beside the printed text.
+    return application.submitted.government_warning
+      ? STATUTORY_WARNING
+      : "The form does not state that a warning is present";
   }
   return String(application.submitted[field as keyof typeof application.submitted]);
 }
@@ -54,6 +62,8 @@ export function Review({
   decision,
   listName,
   position,
+  onPrevious,
+  onNext,
   onVerify,
   onBack,
   onDecide,
@@ -87,6 +97,25 @@ export function Review({
             {position.index} of {position.total} in this list
           </span>
         )}
+        {/* The same lane J and K walk, for anyone not using the keyboard. */}
+        <span className={styles.stepButtons}>
+          <Button
+            type="button"
+            outline
+            disabled={onPrevious === null}
+            onClick={() => onPrevious?.()}
+          >
+            <span aria-hidden="true">←</span> Previous
+          </Button>
+          <Button
+            type="button"
+            outline
+            disabled={onNext === null}
+            onClick={() => onNext?.()}
+          >
+            Next <span aria-hidden="true">→</span>
+          </Button>
+        </span>
         <span className="font-body-3xs text-base">
           Press <kbd className={styles.kbd}>Esc</kbd> to go back
         </span>

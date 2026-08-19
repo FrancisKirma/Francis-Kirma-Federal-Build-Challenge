@@ -15,10 +15,19 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 from models.domain import ExtractedFields
+from repositories.applications import version_dir
 from services import verification
 from services.extraction import ExtractionError
 
 CASSETTES = Path(__file__).parent / "cassettes"
+
+def _records() -> list[dict[str, Any]]:
+    """Every seeded application, so counts follow the fixtures rather than a literal."""
+    records: list[dict[str, Any]] = json.loads(
+        (version_dir() / "applications.json").read_text()
+    )
+    return records
+
 
 
 def _reading(application_id: str) -> ExtractedFields:
@@ -55,7 +64,7 @@ def fake_extract(monkeypatch: pytest.MonkeyPatch) -> FakeExtractor:
 # --- Queue -----------------------------------------------------------------
 
 def test_pending_queue_returns_every_application() -> None:
-    assert len(verification.pending_queue()) == 8
+    assert len(verification.pending_queue()) == len(_records())
 
 
 def test_pending_queue_never_carries_the_answer_key() -> None:

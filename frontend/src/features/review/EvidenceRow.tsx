@@ -1,4 +1,5 @@
 import { cx } from "../../styles/classNames";
+import { STATUTORY_WARNING } from "../../constants";
 import { FIELD_LABELS, type FieldResult, type Status } from "../../types";
 import styles from "./review.module.scss";
 
@@ -28,12 +29,15 @@ function explain(result: FieldResult): string | null {
   if (result.status === "match") return null;
 
   if (result.field === "government_warning") {
+    // The form only attests that a warning is present; the comparison is
+    // against the statutory text, so an agent should not read this row as
+    // "the form said yes and the label has one".
     const same =
       result.extracted !== null &&
-      result.extracted.toLowerCase() === result.claimed.toLowerCase();
+      result.extracted.toLowerCase() === STATUTORY_WARNING.toLowerCase();
     return same
-      ? "Same wording, different capitalisation. This field is compared exactly."
-      : "The printed warning is not the statutory text. This field is compared exactly.";
+      ? "Same wording as the required statement, but different capitalisation. This field is compared exactly, so this does not pass."
+      : "This is not the required statement. The wording must match 27 CFR 16.21 exactly.";
   }
   if (result.field === "alcohol_content" || result.field === "net_contents") {
     return `Form says ${result.claimed}; the label reads ${result.extracted ?? "nothing"}.`;
@@ -81,7 +85,9 @@ export function EvidenceRow({
       </span>
 
       <span className={styles.valueGrid}>
-        <span className="font-body-3xs text-base-dark">Form</span>
+        <span className="font-body-3xs text-base-dark">
+          {field === "government_warning" ? "Required" : "Form"}
+        </span>
         <span className={styles.mono}>{claimed}</span>
         <span className="font-body-3xs text-base-dark">Label</span>
         <span

@@ -15,6 +15,8 @@ interface UseVerification {
   upload: (image: File, claimed: Record<string, string | boolean>) => void;
   /** Record a result obtained elsewhere, such as a batch run. */
   remember: (id: string, result: VerificationResponse) => void;
+  /** Forget every held reading, returning the queue to unchecked. */
+  clear: () => void;
   uploadKey: string;
 }
 
@@ -96,6 +98,12 @@ export function useVerification(): UseVerification {
     [patch],
   );
 
+  const clear = useCallback(() => {
+    setResults(new Map());
+    setErrors(new Map());
+    setBusy(new Set());
+  }, []);
+
   return {
     resultFor: useCallback((key: string) => results.get(key) ?? null, [results]),
     errorFor: useCallback((key: string) => errors.get(key) ?? null, [errors]),
@@ -103,6 +111,7 @@ export function useVerification(): UseVerification {
     verify,
     upload,
     remember,
+    clear,
     uploadKey: UPLOAD_KEY,
   };
 }

@@ -2,7 +2,7 @@
   "application_id": "TTB-2024-0048",
   "provider": "openai",
   "model": "gpt-4.1-mini",
-  "elapsed_seconds": 2.017,
+  "elapsed_seconds": 1.557,
   "response": {
     "brand_name": "SALT FLAT",
     "class_type": "Blanco Tequila",

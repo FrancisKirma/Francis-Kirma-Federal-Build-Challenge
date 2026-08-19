@@ -81,6 +81,8 @@ def test_warning_transcribed_verbatim(application_id: str) -> None:
     exactly, including the casing that is the whole point of 0044.
     """
     record = next(r for r in _records() if r["application_id"] == application_id)
+    if record["_label_truth"]["expected_status"] is None:
+        pytest.skip("image is degraded; the reading is recorded, not asserted")
     expected = WARNING_VARIANTS[record["_label_truth"]["printed"]["government_warning"]]
     got = _cassette(application_id)["response"]["government_warning"]
     assert got == expected
@@ -113,6 +115,8 @@ def test_title_case_warning_not_corrected() -> None:
 @pytest.mark.parametrize("application_id", IDS)
 def test_recorded_extraction_reproduces_expected_status(application_id: str) -> None:
     record = next(r for r in _records() if r["application_id"] == application_id)
+    if record["_label_truth"]["expected_status"] is None:
+        pytest.skip("image is degraded; no known answer to compare against")
     result = compare_record(
         record["submitted"], _cassette(application_id)["response"], application_id
     )
@@ -132,7 +136,16 @@ def test_flagged_records_are_exactly_the_divergent_ones() -> None:
     expected = {
         r["application_id"]
         for r in _records()
-        if any(s != "match" for s in r["_label_truth"]["expected_status"].values())
+        if r["_label_truth"]["expected_status"] is not None
+        and any(s != "match" for s in r["_label_truth"]["expected_status"].values())
+    }
+    flagged = {
+        app_id
+        for app_id in flagged
+        if next(
+            r for r in _records() if r["application_id"] == app_id
+        )["_label_truth"]["expected_status"]
+        is not None
     }
     assert flagged == expected
 

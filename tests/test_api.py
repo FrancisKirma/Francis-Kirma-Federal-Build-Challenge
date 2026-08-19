@@ -18,10 +18,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 from main import app
 from models.domain import ExtractedFields
+from repositories.applications import version_dir
 from services import verification
 from services.extraction import ExtractionError
 
 CASSETTES = Path(__file__).parent / "cassettes"
+
+def _records() -> list[dict[str, Any]]:
+    """Every seeded application, so counts follow the fixtures rather than a literal."""
+    records: list[dict[str, Any]] = json.loads(
+        (version_dir() / "applications.json").read_text()
+    )
+    return records
+
 CLAIMED = {
     "brand_name": "OLD TOM DISTILLERY",
     "class_type": "Kentucky Straight Bourbon Whiskey",
@@ -62,7 +71,7 @@ def test_health(client: TestClient) -> None:
 def test_queue_lists_every_application(client: TestClient) -> None:
     response = client.get("/api/applications")
     assert response.status_code == 200
-    assert len(response.json()) == 8
+    assert len(response.json()) == len(_records())
 
 
 def test_queue_never_exposes_the_answer_key(client: TestClient) -> None:

@@ -87,6 +87,10 @@ def _check_record(record: dict[str, Any], missing_art: list[str]) -> list[str]:
         missing_art.append(app_id)
 
     expected = record["_label_truth"]["expected_status"]
+    if expected is None:
+        # A deliberately degraded image: what a model returns from it cannot be
+        # derived from the printed values, so there is no known answer to check.
+        return failures
     got = derive(claimed, actual)
     failures.extend(
         f"{app_id}.{field}: fixture claims {want!r}, divergence yields {got[field]!r}"
@@ -114,7 +118,10 @@ def main() -> int:
 
     # The set is worthless if every row is green; confirm it exercises each status.
     all_expected = [
-        s for r in records for s in r["_label_truth"]["expected_status"].values()
+        s
+        for r in records
+        if r["_label_truth"]["expected_status"] is not None
+        for s in r["_label_truth"]["expected_status"].values()
     ]
     failures.extend(
         f"fixture set never exercises {status!r}"

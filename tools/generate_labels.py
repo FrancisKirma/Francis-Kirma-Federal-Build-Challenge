@@ -116,6 +116,25 @@ DISTORTION: Final = """
 """
 
 
+# TTB-2024-0049: a photograph taken out of focus. Strong enough that the small
+# print genuinely cannot be read, while the brand and class remain legible --
+# the realistic case where an agent gets a partial reading rather than nothing,
+# and has to decide on incomplete evidence.
+BLUR: Final = """
+  body { background: #1a1a1a; }
+  .label {
+    filter: blur(3.2px) brightness(.94) contrast(.92);
+    transform: scale(.97);
+  }
+  .label::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(150deg,
+      rgba(255,255,255,.12) 0%, transparent 45%, rgba(0,0,0,.18) 100%);
+  }
+  .label { position: relative; }
+"""
+
+
 def find_chrome() -> str:
     """Locate a Chrome binary. CHROME overrides for non-macOS checkouts."""
     override = os.environ.get("CHROME")
@@ -182,8 +201,11 @@ def render_html(record: dict[str, Any]) -> str:
     warning = warning_block(printed["government_warning"])
     page = page.replace("{{WARNING_BLOCK}}", warning)
 
-    if truth.get("post_process") == "angled_glare":
+    post = truth.get("post_process")
+    if post == "angled_glare":
         page = page.replace("</style>", DISTORTION + "</style>")
+    elif post == "out_of_focus":
+        page = page.replace("</style>", BLUR + "</style>")
 
     if "{{" in page:
         leftover = page[page.index("{{"): page.index("{{") + 40]

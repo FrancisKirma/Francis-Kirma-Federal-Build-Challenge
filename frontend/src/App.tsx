@@ -46,6 +46,8 @@ export function App(): React.ReactElement {
   const [pendingDecision, setPendingDecision] = useState<DecisionStatus | null>(null);
   /** Application ids the agent chose to work through, and the lane J/K walks. */
   const [worklist, setWorklist] = useState<string[]>([]);
+  /** The queue order at the moment a review was opened from it. */
+  const [queueLane, setQueueLane] = useState<string[]>([]);
 
   const visible = useMemo(() => {
     const inTab = applications.filter((application) => {
@@ -77,15 +79,23 @@ export function App(): React.ReactElement {
   // No check is started here: reading a label costs a vision-model call, so it
   // runs when the agent asks for it. Any result already held for this
   // application -- from an earlier look or a batch run -- is shown as it is.
-  const openReview = useCallback((id: string, from: "queue" | "batch" = "queue") => {
-    setActiveId(id);
-    setReturnTo(from);
-    setView("review");
-  }, []);
+  const openReview = useCallback(
+    (id: string, from: "queue" | "batch" = "queue") => {
+      setActiveId(id);
+      setReturnTo(from);
+      setView("review");
+      // Take the order as the agent saw it, not as it will be after checking.
+      if (from === "queue") {
+        setQueueLane(visible.map((a) => a.application_id));
+      }
+    },
+    [visible],
+  );
 
-  const laneIds = returnTo === "batch" && worklist.length > 0
-    ? worklist
-    : visible.map((a) => a.application_id);
+  // Frozen when the review opens. The queue re-sorts as results arrive -- a
+  // clean label drops below the flagged ones -- so a live lane would reorder
+  // under the agent and send Next somewhere they did not expect.
+  const laneIds = returnTo === "batch" && worklist.length > 0 ? worklist : queueLane;
   const laneItems = laneIds
     .map((id) => applications.find((a) => a.application_id === id))
     .filter((a): a is ApplicationSummary => a !== undefined);
@@ -136,6 +146,23 @@ export function App(): React.ReactElement {
   const leaveReview = useCallback(() => {
     setView(returnTo);
   }, [returnTo]);
+
+  /**
+   * Return the session to how it opened.
+   *
+   * Clearing only the decisions leaves every label still marked checked, with
+   * its signal and the "5 need attention" count intact -- which reads as a
+   * half-finished reset rather than a deliberate one.
+   */
+  const clearEverything = useCallback(() => {
+    reset();
+    verification.clear();
+    setSelected(new Set());
+    setWorklist([]);
+    setQueueLane([]);
+    setTab("pending");
+    dismissToast();
+  }, [dismissToast, reset, verification]);
 
   const handleDecide = useCallback(
     (status: DecisionStatus) => {
@@ -307,7 +334,7 @@ export function App(): React.ReactElement {
                   type="button"
                   unstyled
                   className="margin-left-3"
-                  onClick={reset}
+                  onClick={clearEverything}
                 >
                   Clear all decisions
                 </Button>
@@ -350,6 +377,20 @@ export function App(): React.ReactElement {
             const at = laneIds.indexOf(active.application_id);
             return at === -1 ? null : { index: at + 1, total: laneIds.length };
           })()}
+          onPrevious={
+            laneIds.indexOf(active.application_id) > 0
+              ? () => {
+                  step(-1);
+                }
+              : null
+          }
+          onNext={
+            laneIds.indexOf(active.application_id) < laneIds.length - 1
+              ? () => {
+                  step(1);
+                }
+              : null
+          }
           onVerify={() => {
             verification.verify(active.application_id);
           }}

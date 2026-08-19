@@ -263,5 +263,38 @@
         "government_warning": "unreadable"
       }
     }
+  },
+  {
+    "application_id": "TTB-2024-0049",
+    "applicant": "Fogbank Distilling Co.",
+    "submitted_date": "2024-03-15",
+    "beverage_type": "distilled_spirits",
+    "artwork": "labels/ttb-2024-0049.png",
+    "submitted": {
+      "brand_name": "FOGBANK",
+      "class_type": "Single Malt Whiskey",
+      "alcohol_content": "46% Alc./Vol. (92 Proof)",
+      "net_contents": "750 mL",
+      "government_warning": true
+    },
+    "_label_truth": {
+      "note": "What gets printed on the artwork. Never served to the client; the service must read this off the image, not be told it.",
+      "condition": "Photographed out of focus. The data below is what the panel carries, but the small print is not legible in the image.",
+      "style": "serif-cream",
+      "post_process": "out_of_focus",
+      "printed": {
+        "brand_name": "FOGBANK",
+        "class_type": "Single Malt Whiskey",
+        "alcohol_content": "46% Alc./Vol. (92 Proof)",
+        "net_contents": "750 mL",
+        "government_warning": "STATUTORY"
+      },
+      "expected_status": null,
+      "note_on_expectations": "No expected_status: what a model returns from an unreadable image is not derivable from the printed values. Observed behaviour is recorded in degraded_reading instead, and this record is excluded from the known-answer check.",
+      "degraded_reading": {
+        "observed": "gpt-4.1-mini reads the brand and class correctly, misreads the alcohol content as 40% where the panel says 46%, and returns the statutory warning verbatim despite it being illegible.",
+        "why_it_matters": "Both are recall rather than reading. A hallucinated value that happens to look plausible is the failure this tool exists to make visible, which is why the agent always sees the artwork beside the reading."
+      }
+    }
   }
 ]

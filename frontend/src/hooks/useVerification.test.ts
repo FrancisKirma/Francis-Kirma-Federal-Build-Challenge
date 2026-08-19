@@ -100,6 +100,26 @@ describe("useVerification", () => {
     expect(hook.current.errorFor("TTB-2024-0042")).toBeNull();
   });
 
+  it("forgets every reading when the session is cleared", async () => {
+    vi.spyOn(api, "verifyApplication").mockResolvedValue(response("TTB-2024-0041"));
+    const { result: hook } = renderHook(() => useVerification());
+
+    act(() => {
+      hook.current.verify("TTB-2024-0041");
+    });
+    await waitFor(() => {
+      expect(hook.current.resultFor("TTB-2024-0041")).not.toBeNull();
+    });
+
+    act(() => {
+      hook.current.clear();
+    });
+    // Leaving readings behind would show every label still checked after a
+    // clear, which reads as a half-finished reset.
+    expect(hook.current.resultFor("TTB-2024-0041")).toBeNull();
+    expect(hook.current.isBusy("TTB-2024-0041")).toBe(false);
+  });
+
   it("keeps the ad-hoc upload apart from any application", async () => {
     vi.spyOn(api, "verifyUpload").mockResolvedValue(response("upload"));
     const { result: hook } = renderHook(() => useVerification());
