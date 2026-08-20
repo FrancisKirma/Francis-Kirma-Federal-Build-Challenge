@@ -315,7 +315,7 @@ running.
 | Python 3.13 | pinned in `.python-version` |
 | [uv](https://docs.astral.sh/uv/) | `brew install uv`, or see the uv docs |
 | Node 22+ | for the frontend (built with 24) |
-| An OpenAI API key | needed only to read a label; the queue works without one |
+| An Anthropic API key | needed only to read a label; the queue works without one |
 | Chrome | only to regenerate label artwork, which is already committed |
 
 ### 1. Install

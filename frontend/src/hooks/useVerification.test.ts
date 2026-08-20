@@ -144,6 +144,30 @@ describe("useVerification", () => {
     expect(hook.current.isBusy("TTB-2024-0041")).toBe(false);
   });
 
+  it("counts a check even when no decision follows it", async () => {
+    // The clear control keys off this count. If checks did not raise it, a
+    // batch run with nothing decided would leave the queue marked up and
+    // offer no way back to a clean slate.
+    vi.spyOn(api, "verifyApplication").mockResolvedValue(
+      response("TTB-2024-0041"),
+    );
+    const { result: hook } = renderHook(() => useVerification());
+
+    expect(hook.current.checkedCount).toBe(0);
+
+    act(() => {
+      hook.current.verify("TTB-2024-0041");
+    });
+    await waitFor(() => {
+      expect(hook.current.checkedCount).toBe(1);
+    });
+
+    act(() => {
+      hook.current.clear();
+    });
+    expect(hook.current.checkedCount).toBe(0);
+  });
+
   it("keeps the ad-hoc upload apart from any application", async () => {
     vi.spyOn(api, "verifyUpload").mockResolvedValue(response("upload"));
     const { result: hook } = renderHook(() => useVerification());

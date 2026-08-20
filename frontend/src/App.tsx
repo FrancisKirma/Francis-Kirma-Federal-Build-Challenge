@@ -360,30 +360,35 @@ export function App(): React.ReactElement {
               Check a label that is not on the list
             </Button>
             {counts.approved + counts.denied > 0 && (
-              <>
-                <Button
-                  type="button"
-                  outline
-                  className="margin-left-2"
-                  onClick={() => {
-                    const exportedAt = new Date().toISOString();
-                    downloadCsv(
-                      toCsv(applications, decisions, exportedAt),
-                      csvFilename(exportedAt),
-                    );
-                  }}
-                >
-                  Download decisions
-                </Button>
-                <Button
-                  type="button"
-                  unstyled
-                  className="margin-left-3"
-                  onClick={clearEverything}
-                >
-                  Clear all decisions
-                </Button>
-              </>
+              <Button
+                type="button"
+                outline
+                className="margin-left-2"
+                onClick={() => {
+                  const exportedAt = new Date().toISOString();
+                  downloadCsv(
+                    toCsv(applications, decisions, exportedAt),
+                    csvFilename(exportedAt),
+                  );
+                }}
+              >
+                Download decisions
+              </Button>
+            )}
+            {/* Checks alone mark up the queue, so clearing cannot wait for a
+                decision: a batch run the agent wants to start over from leaves
+                ten rows checked and nothing decided. */}
+            {counts.approved + counts.denied + verification.checkedCount > 0 && (
+              <Button
+                type="button"
+                unstyled
+                className="margin-left-3"
+                onClick={clearEverything}
+              >
+                {counts.approved + counts.denied > 0
+                  ? "Clear all decisions"
+                  : "Clear all checks"}
+              </Button>
             )}
           </div>
         </>

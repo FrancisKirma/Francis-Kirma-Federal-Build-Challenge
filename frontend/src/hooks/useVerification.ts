@@ -19,6 +19,8 @@ interface UseVerification {
   forget: (id: string) => void;
   /** Forget every held reading, returning the queue to unchecked. */
   clear: () => void;
+  /** How many applications currently hold a reading, checked or errored. */
+  checkedCount: number;
   uploadKey: string;
 }
 
@@ -122,6 +124,9 @@ export function useVerification(): UseVerification {
     remember,
     forget,
     clear,
+    // Errors count too: a run that only failed still leaves the queue marked
+    // up, so there has to be a way back to a clean slate.
+    checkedCount: results.size + errors.size,
     uploadKey: UPLOAD_KEY,
   };
 }
