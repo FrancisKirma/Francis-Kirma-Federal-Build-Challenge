@@ -171,6 +171,12 @@ export function App(): React.ReactElement {
     setQueueLane([]);
     setTriageOrder([]);
     setTab("pending");
+    // The label being reviewed and any half-finished denial go too: leaving
+    // them would reopen the review screen on a label whose reading has just
+    // been thrown away.
+    setActiveId(null);
+    setPendingDecision(null);
+    setReturnTo("queue");
     dismissToast();
   }, [dismissToast, reset, verification]);
 
@@ -375,9 +381,9 @@ export function App(): React.ReactElement {
                 Download decisions
               </Button>
             )}
-            {/* Checks alone mark up the queue, so clearing cannot wait for a
-                decision: a batch run the agent wants to start over from leaves
-                ten rows checked and nothing decided. */}
+            {/* One control for the whole session. Checks mark up the queue
+                just as decisions do, so waiting for a decision would strand an
+                agent who ran a batch and wants to start over. */}
             {counts.approved + counts.denied + verification.checkedCount > 0 && (
               <Button
                 type="button"
@@ -385,9 +391,7 @@ export function App(): React.ReactElement {
                 className="margin-left-3"
                 onClick={clearEverything}
               >
-                {counts.approved + counts.denied > 0
-                  ? "Clear all decisions"
-                  : "Clear all checks"}
+                Clear all actions
               </Button>
             )}
           </div>
