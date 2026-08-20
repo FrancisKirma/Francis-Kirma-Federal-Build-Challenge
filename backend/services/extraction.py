@@ -38,6 +38,11 @@ TIMEOUT_SECONDS: Final = 8.0
 # warning text unreadable and the model correctly returns null for it, which
 # turns a clean record into a false "unreadable". At 1024 the same label returns
 # the warning verbatim on every run. Keep the longest edge at or above this.
+#
+# This cap is also the main cost lever on Anthropic, which bills images by area
+# (~w*h/750 tokens) rather than OpenAI's flat 85 for a low-detail image. The
+# fixtures land at 600x800, about 640 tokens. Raising the cap raises cost
+# quadratically; lowering it below 1024 reintroduces the false "unreadable".
 MAX_IMAGE_EDGE: Final = 1024
 JPEG_QUALITY: Final = 85
 
@@ -86,6 +91,15 @@ SCHEMA: Final[dict[str, Any]] = {
 
 class ExtractionError(RuntimeError):
     """The provider did not return a usable structured result."""
+
+
+class ProviderQuotaError(ExtractionError):
+    """The account is out of credit or past its rate limit.
+
+    Separate from a transient failure because retrying cannot fix it: the second
+    call is refused the same way, costs another request, and doubles the agent's
+    wait before showing the same error.
+    """
 
 
 class InvalidImageError(ValueError):
@@ -197,6 +211,9 @@ async def _post(
     except httpx.HTTPError as exc:
         msg = f"vision provider request failed: {type(exc).__name__}"
         raise ExtractionError(msg) from exc
+    if response.status_code == httpx.codes.TOO_MANY_REQUESTS:
+        msg = "vision provider rejected the request: out of credit or rate limited"
+        raise ProviderQuotaError(msg)
     if response.status_code != httpx.codes.OK:
         msg = f"vision provider returned HTTP {response.status_code}"
         raise ExtractionError(msg)
@@ -303,9 +320,12 @@ async def _anthropic(image: bytes, model: str, deadline: float) -> str:
 
 PROVIDERS: Final[dict[str, Provider]] = {"openai": _openai, "anthropic": _anthropic}
 
+# Haiku is the default for Anthropic: this is verbatim transcription against a
+# strict schema, not reasoning, and it costs roughly a third of Sonnet. Set
+# AI_MODEL=claude-sonnet-5 if a label's fine print starts coming back null.
 DEFAULT_MODELS: Final[dict[str, str]] = {
     "openai": DEFAULT_MODEL,
-    "anthropic": "claude-sonnet-5",
+    "anthropic": "claude-haiku-4-5",
 }
 
 
@@ -320,7 +340,7 @@ async def extract(
     Raises ``InvalidImageError`` for unusable bytes and ``ExtractionError`` when
     the provider fails or returns something that does not match the schema.
     """
-    name = (provider or os.environ.get("AI_PROVIDER") or "openai").strip().lower()
+    name = (provider or os.environ.get("AI_PROVIDER") or "anthropic").strip().lower()
     call = PROVIDERS.get(name)
     if call is None:
         msg = f"unknown AI_PROVIDER {name!r}; expected one of {sorted(PROVIDERS)}"

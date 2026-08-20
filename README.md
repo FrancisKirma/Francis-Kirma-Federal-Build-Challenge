@@ -335,10 +335,13 @@ cp .env.example .env
 Then put your key in `.env`:
 
 ```
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-AI_MODEL=gpt-4.1-mini
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+AI_MODEL=claude-haiku-4-5
 ```
+
+Either provider works. `AI_PROVIDER=openai` with `OPENAI_API_KEY` and
+`AI_MODEL=gpt-4.1-mini` is the supported alternative — no code change.
 
 `.env` is gitignored and must never be committed. The key is read from the environment at
 call time and is never sent to the browser or included in any response.
@@ -438,8 +441,12 @@ The app deploys to Vercel as a single Python function serving the built frontend
 - `build.py` runs during deployment: `npm ci`, then the USWDS asset copy, then `vite build`.
 - `pyproject.toml` declares both under `[tool.vercel]`.
 
-Set `OPENAI_API_KEY`, `AI_PROVIDER`, and `AI_MODEL` as project environment variables in the
-Vercel dashboard — never in a committed file.
+Set `ANTHROPIC_API_KEY`, `AI_PROVIDER`, and `AI_MODEL` as project environment variables in
+the Vercel dashboard — never in a committed file.
+
+If verification fails with "the label could not be read", check the provider account's
+credit balance first: an exhausted balance answers every call with HTTP 429, which the
+service reports as a 502. It is not retried, because the retry is refused the same way.
 
 ### Quality gates
 

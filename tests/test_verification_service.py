@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 from models.domain import ExtractedFields
 from repositories.applications import version_dir
 from services import verification
-from services.extraction import ExtractionError
+from services.extraction import ExtractionError, ProviderQuotaError
 
 CASSETTES = Path(__file__).parent / "cassettes"
 
@@ -40,17 +40,22 @@ class FakeExtractor:
     """Stands in for the vision provider. Records calls, fails on demand."""
 
     def __init__(
-        self, *, fail_times: int = 0, reading: ExtractedFields | None = None
+        self,
+        *,
+        fail_times: int = 0,
+        reading: ExtractedFields | None = None,
+        error: type[ExtractionError] = ExtractionError,
     ) -> None:
         self.fail_times = fail_times
         self.reading = reading or _reading("TTB-2024-0041")
+        self.error = error
         self.calls = 0
 
     async def __call__(self, image: bytes, **kwargs: object) -> ExtractedFields:
         self.calls += 1
         if self.calls <= self.fail_times:
             msg = "simulated transient failure"
-            raise ExtractionError(msg)
+            raise self.error(msg)
         return self.reading
 
 
@@ -93,6 +98,16 @@ async def test_retry_is_not_infinite(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(ExtractionError):
         await verification.read_label(b"image-bytes")
     assert extractor.calls == 2
+
+
+async def test_quota_failure_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An exhausted balance refuses the retry too -- it only doubles the wait."""
+    extractor = FakeExtractor(fail_times=1, error=ProviderQuotaError)
+    monkeypatch.setattr(verification, "extract", extractor)
+
+    with pytest.raises(ProviderQuotaError):
+        await verification.read_label(b"image-bytes")
+    assert extractor.calls == 1
 
 
 async def test_success_is_not_retried(fake_extract: FakeExtractor) -> None:

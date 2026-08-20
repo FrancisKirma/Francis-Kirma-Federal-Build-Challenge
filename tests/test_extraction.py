@@ -10,12 +10,14 @@ through the real comparison engine must reproduce each record's declared
 ``expected_status``.
 """
 
+import asyncio
 import json
 import sys
 from io import BytesIO
 from pathlib import Path
 from typing import Any
 
+import httpx
 import pytest
 from PIL import Image
 
@@ -32,6 +34,8 @@ from services.extraction import (
     TIMEOUT_SECONDS,
     ExtractionError,
     InvalidImageError,
+    ProviderQuotaError,
+    _post,
     extract,
     preprocess,
 )
@@ -224,6 +228,42 @@ async def test_missing_key_fails_with_a_usable_message(
 
 def test_both_providers_registered() -> None:
     assert set(PROVIDERS) == {"openai", "anthropic"}
+
+
+def test_anthropic_is_the_default_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("AI_PROVIDER", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    # The key check is the first thing the adapter does, so naming it in the
+    # error proves which provider was selected without a network call.
+    with pytest.raises(ExtractionError, match="ANTHROPIC_API_KEY is not set"):
+        asyncio.run(extract(label_path("TTB-2024-0041").read_bytes()))
+
+
+@pytest.mark.parametrize("status", [429, 500])
+async def test_quota_status_is_distinguished_from_other_failures(
+    status: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A 429 must raise the non-retryable subclass; a 500 must stay retryable.
+
+    Both providers share ``_post``, so this covers the OpenAI path too.
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status, json={})
+
+    transport = httpx.MockTransport(handler)
+    original = httpx.AsyncClient
+
+    def patched(**kwargs: object) -> httpx.AsyncClient:
+        kwargs.pop("transport", None)
+        return original(transport=transport, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(httpx, "AsyncClient", patched)
+
+    with pytest.raises(ExtractionError) as caught:
+        await _post("https://example.invalid", {}, {}, 5.0)
+
+    assert isinstance(caught.value, ProviderQuotaError) == (status == 429)
 
 
 def test_schema_allows_null_for_every_field() -> None:

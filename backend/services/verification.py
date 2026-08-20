@@ -13,7 +13,12 @@ from models.domain import ExtractedFields, VerificationResult
 from repositories.applications import label_path, pending_applications
 
 from services.comparison import compare_record
-from services.extraction import TIMEOUT_SECONDS, ExtractionError, extract
+from services.extraction import (
+    TIMEOUT_SECONDS,
+    ExtractionError,
+    ProviderQuotaError,
+    extract,
+)
 
 # One retry, and only when there is time to spend on it. A transient network
 # stall is common enough to be worth absorbing -- one was observed while
@@ -51,10 +56,16 @@ async def read_label(image: bytes) -> ExtractedFields:
     Only ``ExtractionError`` is retried: a reading that succeeded but disagrees
     with the claim is a result, not a failure, and retrying it would be a way of
     shopping for the answer the applicant wanted.
+
+    ``ProviderQuotaError`` is exempt. An exhausted balance refuses the second
+    call exactly as it refused the first, so the retry only doubles the wait
+    before the agent sees the same error.
     """
     started = perf_counter()
     try:
         return await extract(image)
+    except ProviderQuotaError:
+        raise
     except ExtractionError:
         if perf_counter() - started >= RETRY_IF_ELAPSED_UNDER:
             raise
